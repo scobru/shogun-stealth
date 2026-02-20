@@ -1,0 +1,267 @@
+/**
+ * Stealth Core Library - Fluidkey / SHIP-03 Compatible
+ *
+ * Implements ERC-5564 inspired stealth addresses using Fluidkey Stealth Account Kit.
+ * Compatible with Shogun Wallet (SHIP-03).
+ */
+
+import { ethers } from "ethers";
+import { keccak_256 } from "@noble/hashes/sha3.js";
+import {
+    generateStealthAddresses,
+    generateStealthPrivateKey,
+} from "@fluidkey/stealth-account-kit";
+
+// Helper to convert Uint8Array to Hex with 0x prefix
+const toHex = (arr: Uint8Array) =>
+    "0x" +
+    Array.from(arr)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+/**
+ * Normalize public key to compressed format (33 bytes)
+ */
+function normalizePublicKey(publicKey: string): string {
+    try {
+        let normalized = publicKey;
+
+        if (normalized.startsWith("0x")) {
+            normalized = normalized.slice(2);
+        }
+
+        // If uncompressed (130 hex chars = 65 bytes), compute set true for compressed
+        if (normalized.length === 130) {
+            return ethers.SigningKey.computePublicKey("0x" + normalized, true);
+        }
+
+        // If already compressed (66 hex chars = 33 bytes), ensure 0x prefix
+        if (normalized.length === 66) {
+            return "0x" + normalized;
+        }
+
+        // If it's 64 hex chars (missing prefix byte), add 0x04 uncompressed prefix
+        // This is critical for GunDB public keys.
+        if (normalized.length === 64) {
+            return ethers.SigningKey.computePublicKey("0x04" + normalized, true);
+        }
+
+        throw new Error(`Invalid public key length: ${normalized.length}`);
+    } catch (error) {
+        console.error("Error normalizing public key:", publicKey, error);
+        throw error;
+    }
+}
+
+export interface StealthKeys {
+    spending: {
+        priv: string;
+        pub: string;
+    };
+    viewing: {
+        priv: string;
+        pub: string;
+    };
+}
+
+export interface StealthAnnouncement {
+    id: string;
+    ephemeralPubKey: string; // E (compressed hex)
+    stealthAddress: string; // P (Ethereum address)
+    viewTag: string; // SHIP-03 view tag (0xNN)
+    metadata?: string; // Optional encrypted data
+    timestamp: number;
+}
+
+/**
+ * Derive stealth keys from Gun SEA identity using SHIP-03 salts.
+ */
+export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
+    // SHIP-03 compliant derivation
+    const viewingSeed = ethers.keccak256(
+        ethers.toUtf8Bytes("SHIP-03-VIEWING" + seaEpriv)
+    );
+    const viewingWallet = new ethers.Wallet(viewingSeed);
+
+    const spendingSeed = ethers.keccak256(
+        ethers.toUtf8Bytes("SHIP-03-SPENDING" + seaEpriv)
+    );
+    const spendingWallet = new ethers.Wallet(spendingSeed);
+
+    return {
+        spending: {
+            priv: spendingWallet.privateKey,
+            pub: normalizePublicKey(spendingWallet.signingKey.publicKey),
+        },
+        viewing: {
+            priv: viewingWallet.privateKey,
+            pub: normalizePublicKey(viewingWallet.signingKey.publicKey),
+        },
+    };
+}
+
+/**
+ * Generate an Ethereum stealth address for a recipient using Fluidkey.
+ */
+export function generateStealthAddress(
+    spendingPubKey: string,
+    viewingPubKey: string
+): {
+    stealthAddress: string;
+    ephemeralPubKey: string;
+    sharedSecretHash: string;
+    viewTag: string;
+} {
+    // 1. Generate ephemeral key pair
+    const ephemeralWallet = ethers.Wallet.createRandom();
+    const ephemeralPrivateKey = ephemeralWallet.privateKey;
+    const ephemeralPublicKey = normalizePublicKey(ephemeralWallet.signingKey.publicKey);
+
+    // Normalize recipient keys
+    const normalizedViewingKey = normalizePublicKey(viewingPubKey);
+    const normalizedSpendingKey = normalizePublicKey(spendingPubKey);
+
+    // 2. Compute shared secret ssTag = e * V (for tag check)
+    const ssTag = ephemeralWallet.signingKey.computeSharedSecret(normalizedViewingKey);
+    const hTag = ethers.keccak256(ssTag);
+    const viewTag = hTag.slice(0, 6); // 0xNNNN
+
+    // 3. Use Fluidkey to generate the stealth address
+    const result = generateStealthAddresses({
+        ephemeralPrivateKey: ephemeralPrivateKey,
+        spendingPublicKeys: [normalizedSpendingKey],
+    });
+
+    return {
+        stealthAddress: result.stealthAddresses[0],
+        ephemeralPubKey: ephemeralPublicKey,
+        sharedSecretHash: hTag, // Tag secret
+        viewTag,
+    };
+}
+
+/**
+ * Open/unlock a stealth address to derive private key using Fluidkey.
+ */
+export function openStealthAddress(
+    stealthAddress: string,
+    ephemeralPublicKey: string,
+    viewingPrivKey: string,
+    spendingPrivKey: string
+): ethers.Wallet {
+    // Normalize keys
+    const normalizedEphemeralKey = normalizePublicKey(ephemeralPublicKey);
+
+    // Try Fluidkey
+    const result = generateStealthPrivateKey({
+        ephemeralPublicKey: normalizedEphemeralKey,
+        spendingPrivateKey: spendingPrivKey,
+    });
+
+    const wallet = new ethers.Wallet(result.stealthPrivateKey);
+
+    if (wallet.address.toLowerCase() !== stealthAddress.toLowerCase()) {
+        throw new Error("Derived address mismatch");
+    }
+
+    return wallet;
+}
+
+/**
+ * Scan an announcement to see if it belongs to the receiver.
+ */
+export function checkStealthAddress(
+    ephemeralPubKey: string,
+    viewingPrivKey: string,
+    spendingPrivKey: string,
+    announcedAddress: string,
+    viewTag?: string
+): boolean {
+    try {
+        const normalizedEphemeralKey = normalizePublicKey(ephemeralPubKey);
+
+        // 1. Optional fast tag check
+        if (viewTag && viewTag !== "0x00" && viewTag !== "0x") {
+            const viewingWallet = new ethers.Wallet(viewingPrivKey);
+            const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
+            const hTag = ethers.keccak256(ssTag);
+            const computedTag = hTag.slice(0, 6).toLowerCase();
+            const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+
+            if (computedTag !== normalizedTag) {
+                // Log but don't fail yet, to see if address matches
+                console.debug(`[Stealth] Tag mismatch: ${computedTag} vs registry=${normalizedTag}`);
+            }
+        }
+
+        // 2. Definitive check by deriving the signer
+        try {
+            openStealthAddress(
+                announcedAddress,
+                ephemeralPubKey,
+                viewingPrivKey,
+                spendingPrivKey
+            );
+            console.log(`[Stealth] ✅ Ownership verified for ${announcedAddress}`);
+            return true;
+        } catch (e) {
+            // Address doesn't match this derivation
+            return false;
+        }
+    } catch (error) {
+        console.warn("[Stealth] checkStealthAddress error:", error);
+        return false;
+    }
+}
+
+/**
+ * Scan a list of announcements to find the ones the receiver controls.
+ */
+export function scanAnnouncements(
+    announcements: StealthAnnouncement[],
+    keys: StealthKeys
+): Array<StealthAnnouncement & { wallet: ethers.Wallet; privateKey: string }> {
+    const owned: Array<
+        StealthAnnouncement & { wallet: ethers.Wallet; privateKey: string }
+    > = [];
+
+    console.log(`[Stealth] Scanning ${announcements.length} announcements...`);
+
+    for (const ann of announcements) {
+        if (
+            checkStealthAddress(
+                ann.ephemeralPubKey,
+                keys.viewing.priv,
+                keys.spending.priv,
+                ann.stealthAddress,
+                ann.viewTag
+            )
+        ) {
+            try {
+                const wallet = openStealthAddress(
+                    ann.stealthAddress,
+                    ann.ephemeralPubKey,
+                    keys.viewing.priv,
+                    keys.spending.priv
+                );
+                owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
+            } catch (e) {
+                // Should not happen if checkStealthAddress returned true
+                console.warn("[Stealth] Match check passed but open failed:", e);
+            }
+        }
+    }
+
+    console.log(`[Stealth] Scan complete. Found ${owned.length} owned cells.`);
+    return owned;
+}
+
+/**
+ * Legacy identity derivation.
+ */
+export function gunPairToEthAddress(seaEpriv: string): string {
+    const seed = keccak_256(ethers.toUtf8Bytes(seaEpriv));
+    const privKey = toHex(seed);
+    const wallet = new ethers.Wallet(privKey);
+    return wallet.address;
+}

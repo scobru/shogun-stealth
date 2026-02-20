@@ -25,20 +25,25 @@
   "author": "Shogun Team",
   "license": "MIT",
   "dependencies": {
+    "@fluidkey/stealth-account-kit": "^1.1.1",
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@scure/bip32": "^2.0.1",
     "@tailwindcss/postcss": "^4.1.10",
     "@tailwindcss/vite": "^4.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "daisyui": "^5.0.43",
     "dotenv": "^17.2.0",
-    "gun": "^0.2020.1241",
+    "ethers": "^6.16.0",
+    "gun": "https://github.com/scobru/gun",
     "gun-avatar": "^2.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.2",
-    "shogun-button-react": "^6.4.4",
-    "shogun-core": "^6.4.4",
-    "shogun-relays": "^1.0.4",
+    "shogun-button-react": "^6.9.3",
+    "shogun-core": "^6.9.4",
+    "shogun-relays": "^1.1.1",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
     "vite-plugin-node-polyfills": "^0.24.0"
@@ -74,4 +79,3 @@
     "not dead"
   ]
 }
-
