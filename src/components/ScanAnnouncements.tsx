@@ -12,6 +12,7 @@ import {
   type StealthKeys,
   deriveStealthKeysFromGun,
 } from "../lib/stealthCore";
+import { useNetwork } from "../lib/NetworkContext";
 import {
   subscribeToAnnouncements,
   getAllAnnouncements,
@@ -27,12 +28,9 @@ interface OwnedAnnouncement extends StealthAnnouncement {
 }
 
 // Sepolia public RPC
-// Base Sepolia RPC and Chain ID
-const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
-const BASE_SEPOLIA_CHAIN_ID = 84532;
-
 export const ScanAnnouncements: React.FC = () => {
   const { isLoggedIn, core } = useShogun();
+  const { currentNetwork } = useNetwork();
   const [stealthKeys, setStealthKeys] = useState<StealthKeys | null>(null);
   const [announcements, setAnnouncements] = useState<StealthAnnouncement[]>([]);
   const [ownedAddresses, setOwnedAddresses] = useState<OwnedAnnouncement[]>([]);
@@ -102,12 +100,18 @@ export const ScanAnnouncements: React.FC = () => {
       // 1. Fetch from GunDB
       const gunAnnouncements = await getAllAnnouncements(gun);
 
-      // 2. Fetch from Chain (Base Sepolia)
+      // 2. Fetch from Chain
       let chainAnnouncements: StealthAnnouncement[] = [];
-      if ((core as any)?.signer?.provider) {
+      const provider =
+        (core as any)?.signer?.provider ||
+        new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
+
+      if (provider) {
         try {
           chainAnnouncements = await fetchOnChainAnnouncements(
-            (core as any).signer.provider,
+            currentNetwork.registryAddress,
+            currentNetwork.forwarderAddress,
+            provider,
           );
         } catch (e) {
           console.warn("Chain fetch failed:", e);
@@ -125,7 +129,7 @@ export const ScanAnnouncements: React.FC = () => {
 
       if (owned.length > 0) {
         setStatus(`✅ Found ${owned.length} address(es)! Syncing balances...`);
-        setTimeout(() => loadBalances("sepolia"), 100);
+        setTimeout(() => loadBalances(), 100);
       } else {
         setStatus(
           "🔍 No addresses found. (New signals will appear if subscribed.)",
@@ -138,13 +142,11 @@ export const ScanAnnouncements: React.FC = () => {
     }
   }, [gun, stealthKeys, core]);
 
-  const loadBalances = async (network: "mainnet" | "sepolia" = "sepolia") => {
+  const loadBalances = async () => {
     if (ownedAddresses.length === 0) return;
     setIsLoadingBalances(true);
     try {
-      const rpc =
-        network === "sepolia" ? BASE_SEPOLIA_RPC : "https://cloudflare-eth.com";
-      const provider = new ethers.JsonRpcProvider(rpc);
+      const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
 
       const updated = await Promise.all(
         ownedAddresses.map(async (entry) => {
@@ -212,14 +214,15 @@ export const ScanAnnouncements: React.FC = () => {
 
     try {
       const provider = new ethers.JsonRpcProvider(
-        BASE_SEPOLIA_RPC,
-        BASE_SEPOLIA_CHAIN_ID,
+        currentNetwork.rpcUrl,
+        currentNetwork.chainId,
       );
       const wallet = entry.wallet.connect(provider);
 
       // Get current balance
       const balance = await provider.getBalance(entry.stealthAddress);
-      if (balance === 0n) throw new Error("Balance is 0 on Base Sepolia");
+      if (balance === 0n)
+        throw new Error(`Balance is 0 on ${currentNetwork.name}`);
 
       // Estimate gas and fees
       const feeData = await provider.getFeeData();
@@ -322,7 +325,7 @@ export const ScanAnnouncements: React.FC = () => {
               ? "bg-accent text-accent-content animate-pulse"
               : "surface-container hover:bg-base-300 hover:scale-[1.03]"
           } disabled:opacity-30`}
-          onClick={() => loadBalances("sepolia")}
+          onClick={() => loadBalances()}
           disabled={isLoadingBalances || ownedAddresses.length === 0}
         >
           <span className="text-3xl">💰</span>
@@ -411,7 +414,7 @@ export const ScanAnnouncements: React.FC = () => {
                   entry.metadata.startsWith("0x") &&
                   entry.metadata.length === 66 && (
                     <a
-                      href={`https://sepolia.basescan.org/tx/${entry.metadata}`}
+                      href={`${currentNetwork.explorerUrl}/tx/${entry.metadata}`}
                       target="_blank"
                       rel="noreferrer"
                       className="bg-primary/10 text-primary hover:bg-primary/20 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
@@ -420,7 +423,7 @@ export const ScanAnnouncements: React.FC = () => {
                     </a>
                   )}
                 <a
-                  href={`https://sepolia.basescan.org/address/${entry.stealthAddress}`}
+                  href={`${currentNetwork.explorerUrl}/address/${entry.stealthAddress}`}
                   target="_blank"
                   rel="noreferrer"
                   className="bg-base-300 hover:bg-base-100 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
@@ -482,7 +485,7 @@ export const ScanAnnouncements: React.FC = () => {
                     Withdrawal Authorization
                   </span>
                   <span className="text-[10px] opacity-20 font-bold uppercase">
-                    Base Sepolia Pulse
+                    {currentNetwork.name} Pulse
                   </span>
                 </div>
 
@@ -526,7 +529,7 @@ export const ScanAnnouncements: React.FC = () => {
                       Broadcast Complete
                     </span>
                     <a
-                      href={`https://sepolia.basescan.org/tx/${sweepState[entry.id].txHash}`}
+                      href={`${currentNetwork.explorerUrl}/tx/${sweepState[entry.id].txHash}`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs font-mono opacity-80 hover:opacity-100 truncate w-full text-center underline decoration-dotted underline-offset-4"

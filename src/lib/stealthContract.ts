@@ -9,10 +9,11 @@ import { StealthAnnouncement, StealthKeys } from "./stealthCore";
  * Register stealth keys on Shogun StealthKeyRegistry.
  */
 export async function registerOnChain(
+    registryAddress: string,
     signer: ethers.Signer,
     keys: StealthKeys
 ): Promise<string> {
-    const registry = getRegistryContract(signer);
+    const registry = getRegistryContract(registryAddress, signer);
 
     // Shogun StealthKeyRegistry uses strings for public keys.
     // We pass them as 0x-prefixed hex strings.
@@ -29,11 +30,12 @@ export async function registerOnChain(
  * MetaMask (signer) pays the gas fee.
  */
 export async function registerOnChainOnBehalf(
+    registryAddress: string,
     gasSigner: ethers.Signer,
     neuralPriv: string,
     keys: StealthKeys
 ): Promise<string> {
-    const registry = getRegistryContract(gasSigner);
+    const registry = getRegistryContract(registryAddress, gasSigner);
     const neuralWallet = new ethers.Wallet(neuralPriv);
     const registrant = neuralWallet.address;
 
@@ -83,6 +85,7 @@ export async function registerOnChainOnBehalf(
  * Send ETH and announce payment to a stealth address using PaymentForwarder.
  */
 export async function sendEthOnChain(
+    forwarderAddress: string,
     signer: ethers.Signer,
     params: {
         receiver: string;
@@ -91,7 +94,7 @@ export async function sendEthOnChain(
         amount: string;
     }
 ): Promise<string> {
-    const forwarder = getPaymentForwarderContract(signer);
+    const forwarder = getPaymentForwarderContract(forwarderAddress, signer);
 
     // 1. Get current toll from contract
     const toll = await forwarder.toll();
@@ -129,11 +132,13 @@ export async function sendEthOnChain(
  * Fetch announcements from both StealthKeyRegistry (Metadata) and PaymentForwarder.
  */
 export async function fetchOnChainAnnouncements(
+    registryAddress: string,
+    forwarderAddress: string,
     provider: ethers.Provider,
     fromBlock: number | string = "earliest"
 ): Promise<StealthAnnouncement[]> {
-    const registry = getRegistryContract(provider);
-    const forwarder = getPaymentForwarderContract(provider);
+    const registry = getRegistryContract(registryAddress, provider);
+    const forwarder = getPaymentForwarderContract(forwarderAddress, provider);
 
     const announcements: StealthAnnouncement[] = [];
 
@@ -184,10 +189,11 @@ export async function fetchOnChainAnnouncements(
  * Check if a user is registered on-chain.
  */
 export async function getOnChainStealthKeys(
+    registryAddress: string,
     provider: ethers.Provider,
     address: string
 ): Promise<{ viewing: string; spending: string } | null> {
-    const registry = getRegistryContract(provider);
+    const registry = getRegistryContract(registryAddress, provider);
     try {
         const [viewing, spending] = await registry.getStealthKeys(address);
         if (!viewing || viewing === "" || viewing === "0x") return null;

@@ -16,6 +16,8 @@ import type { ShogunCore } from "shogun-core";
 import Gun from "gun";
 import "gun/sea";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
+import { NetworkSelector } from "./components/NetworkSelector";
+import { NetworkProvider } from "./lib/NetworkContext";
 import StealthDashboard from "./components/StealthDashboard";
 import logo from "/logo.svg";
 
@@ -67,6 +69,7 @@ const MainApp: React.FC = () => {
                 {isLoggedIn ? "ONLINE" : "OFFLINE"}
               </span>
             </div>
+            <NetworkSelector />
             <ThemeToggle />
           </div>
         </div>
@@ -136,18 +139,20 @@ function ShogunApp({ shogun, options }: ShogunAppProps) {
 
   return (
     <Router>
-      <ShogunButtonProvider
-        core={shogun}
-        options={options}
-        onLoginSuccess={handleLoginSuccess}
-        onSignupSuccess={handleLoginSuccess}
-        onError={handleError}
-      >
-        <Routes>
-          <Route path="/" element={<MainApp />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </ShogunButtonProvider>
+      <NetworkProvider>
+        <ShogunButtonProvider
+          core={shogun}
+          options={options}
+          onLoginSuccess={handleLoginSuccess}
+          onSignupSuccess={handleLoginSuccess}
+          onError={handleError}
+        >
+          <Routes>
+            <Route path="/" element={<MainApp />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ShogunButtonProvider>
+      </NetworkProvider>
     </Router>
   );
 }

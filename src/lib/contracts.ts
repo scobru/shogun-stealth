@@ -1,10 +1,5 @@
 import { ethers } from "ethers";
 
-// --- CONTRACT ADDRESSES (BASE SEPOLIA - 84532) ---
-
-export const STEALTH_KEY_REGISTRY_ADDRESS = "0x6038197D7eb76ee668b37c61021619542F757B63";
-export const PAYMENT_FORWARDER_ADDRESS = "0x512edE537cb53dcbFC29629B4999c3e8f18799Eb";
-
 // --- ABIs ---
 
 export const STEALTH_KEY_REGISTRY_ABI = [
@@ -24,10 +19,10 @@ export const PAYMENT_FORWARDER_ABI = [
 
 // --- CONTRACT HELPERS ---
 
-export function getRegistryContract(signerOrProvider: ethers.Signer | ethers.Provider) {
-    return new ethers.Contract(STEALTH_KEY_REGISTRY_ADDRESS, STEALTH_KEY_REGISTRY_ABI, signerOrProvider);
+export function getRegistryContract(address: string, signerOrProvider: ethers.Signer | ethers.Provider) {
+    return new ethers.Contract(address, STEALTH_KEY_REGISTRY_ABI, signerOrProvider);
 }
 
-export function getPaymentForwarderContract(signerOrProvider: ethers.Signer | ethers.Provider) {
-    return new ethers.Contract(PAYMENT_FORWARDER_ADDRESS, PAYMENT_FORWARDER_ABI, signerOrProvider);
+export function getPaymentForwarderContract(address: string, signerOrProvider: ethers.Signer | ethers.Provider) {
+    return new ethers.Contract(address, PAYMENT_FORWARDER_ABI, signerOrProvider);
 }

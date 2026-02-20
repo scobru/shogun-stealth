@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { useShogun } from "shogun-button-react";
 import { ethers } from "ethers";
+import { useNetwork } from "../lib/NetworkContext";
 import { publishStealthKeys, getStealthKeys } from "../lib/gunStealth";
 import {
   deriveStealthKeysFromGun,
@@ -54,24 +55,8 @@ const CheckIcon = () => (
 
 export const RegisterStealth: React.FC = () => {
   const { isLoggedIn, core } = useShogun();
+  const { currentNetwork } = useNetwork();
   const [stealthKeys, setStealthKeys] = useState<StealthKeys | null>(null);
-  const [ethAddress, setEthAddress] = useState<string>("");
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [copiedSpending, setCopiedSpending] = useState(false);
-  const [copiedViewing, setCopiedViewing] = useState(false);
-  const [copiedEth, setCopiedEth] = useState(false);
-  const [status, setStatus] = useState<{
-    type: "success" | "error" | "info";
-    msg: string;
-  } | null>(null);
-  const [alias, setAlias] = useState("");
-  const [userPub, setUserPub] = useState<string>("");
-  const [isOnChain, setIsOnChain] = useState(false);
-  const [isRegisteringOnChain, setIsRegisteringOnChain] = useState(false);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-
-  const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532 in hex
 
   useEffect(() => {
     if (!isLoggedIn || !core) return;
@@ -117,13 +102,15 @@ export const RegisterStealth: React.FC = () => {
   // Check on-chain registry
   useEffect(() => {
     if (!(core as any)?.signer?.provider || !ethAddress) return;
-    getOnChainStealthKeys((core as any).signer.provider, ethAddress).then(
-      (keys) => {
-        if (keys) setIsOnChain(true);
-        else setIsOnChain(false);
-      },
-    );
-  }, [core, ethAddress]);
+    getOnChainStealthKeys(
+      currentNetwork.registryAddress,
+      (core as any).signer.provider,
+      ethAddress,
+    ).then((keys) => {
+      if (keys) setIsOnChain(true);
+      else setIsOnChain(false);
+    });
+  }, [core, ethAddress, currentNetwork]);
 
   const handlePublish = async () => {
     if (!userPub || !stealthKeys || !(core as any)?.gun) return;
@@ -138,11 +125,13 @@ export const RegisterStealth: React.FC = () => {
       });
       // Trigger on-chain check
       if ((core as any)?.signer?.provider && ethAddress) {
-        getOnChainStealthKeys((core as any).signer.provider, ethAddress).then(
-          (keys) => {
-            if (keys) setIsOnChain(true);
-          },
-        );
+        getOnChainStealthKeys(
+          currentNetwork.registryAddress,
+          (core as any).signer.provider,
+          ethAddress,
+        ).then((keys) => {
+          if (keys) setIsOnChain(true);
+        });
       }
     } catch (e: any) {
       setStatus({ type: "error", msg: `Error: ${e.message}` });
@@ -160,29 +149,37 @@ export const RegisterStealth: React.FC = () => {
       return;
     }
     try {
-      setStatus({ type: "info", msg: "Connecting to wallet..." });
+      setStatus({
+        type: "info",
+        msg: `Connecting to ${currentNetwork.name}...`,
+      });
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const network = await provider.getNetwork();
 
-      if (network.chainId !== 84532n) {
-        setStatus({ type: "info", msg: "Switching to Base Sepolia..." });
+      const expectedChainId = BigInt(currentNetwork.chainId);
+      const hexChainId = "0x" + currentNetwork.chainId.toString(16);
+
+      if (network.chainId !== expectedChainId) {
+        setStatus({
+          type: "info",
+          msg: `Switching to ${currentNetwork.name}...`,
+        });
         try {
           await (window as any).ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+            params: [{ chainId: hexChainId }],
           });
         } catch (switchError: any) {
-          // This error code indicates that the chain has not been added to MetaMask.
           if (switchError.code === 4902) {
             await (window as any).ethereum.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: BASE_SEPOLIA_CHAIN_ID,
-                  chainName: "Base Sepolia",
-                  rpcUrls: ["https://sepolia.base.org"],
+                  chainId: hexChainId,
+                  chainName: currentNetwork.name,
+                  rpcUrls: [currentNetwork.rpcUrl],
                   nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-                  blockExplorerUrls: ["https://sepolia.basescan.org"],
+                  blockExplorerUrls: [currentNetwork.explorerUrl],
                 },
               ],
             });
@@ -193,11 +190,10 @@ export const RegisterStealth: React.FC = () => {
       }
 
       await provider.send("eth_requestAccounts", []);
-      // Re-trigger the check for on-chain keys if everything is ready
       setIsWalletConnected(true);
       setStatus({
         type: "success",
-        msg: "Wallet connected to Base Sepolia! You can now register on-chain.",
+        msg: `Wallet connected to ${currentNetwork.name}! You can now register on-chain.`,
       });
     } catch (e: any) {
       setStatus({ type: "error", msg: `Connection failed: ${e.message}` });
@@ -215,10 +211,10 @@ export const RegisterStealth: React.FC = () => {
     if (!signer && (window as any).ethereum) {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const network = await provider.getNetwork();
-      if (network.chainId !== 84532n) {
+      if (network.chainId !== BigInt(currentNetwork.chainId)) {
         setStatus({
           type: "error",
-          msg: "Error: Please switch to Base Sepolia network.",
+          msg: `Error: Please switch to ${currentNetwork.name} network.`,
         });
         return;
       }
@@ -239,6 +235,7 @@ export const RegisterStealth: React.FC = () => {
       // 1. neuralPriv signs the keys
       // 2. MetaMask (signer) pays the gas
       await registerOnChainOnBehalf(
+        currentNetwork.registryAddress,
         signer,
         stealthKeys.neuralPriv,
         stealthKeys,

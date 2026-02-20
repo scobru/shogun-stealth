@@ -15,8 +15,7 @@ import {
   type StealthRegistryEntry,
 } from "../lib/gunStealth";
 import { sendEthOnChain, getOnChainStealthKeys } from "../lib/stealthContract";
-
-const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
+import { useNetwork } from "../lib/NetworkContext";
 
 const StepHeader = ({
   n,
@@ -43,6 +42,7 @@ const StepHeader = ({
 
 export const SendStealth: React.FC = () => {
   const { isLoggedIn, core } = useShogun();
+  const { currentNetwork } = useNetwork();
   const [recipientPub, setRecipientPub] = useState("");
   const [recipientEntry, setRecipientEntry] =
     useState<StealthRegistryEntry | null>(null);
@@ -92,10 +92,14 @@ export const SendStealth: React.FC = () => {
 
         // Fallback to public RPC if Shogun provider is not ready
         if (!provider) {
-          provider = new ethers.JsonRpcProvider(BASE_SEPOLIA_RPC);
+          provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
         }
 
-        const chainKeys = await getOnChainStealthKeys(provider, input);
+        const chainKeys = await getOnChainStealthKeys(
+          currentNetwork.registryAddress,
+          provider,
+          input,
+        );
         if (chainKeys) {
           setRecipientEntry({
             pub: input,
@@ -106,7 +110,7 @@ export const SendStealth: React.FC = () => {
           });
           setStatus({
             type: "success",
-            msg: "🎯 Found on Base Sepolia Registry!",
+            msg: `🎯 Found on ${currentNetwork.name} Registry!`,
           });
           setStep(2);
           return;
@@ -186,12 +190,16 @@ export const SendStealth: React.FC = () => {
 
         if (!signer) throw new Error("Wallet not connected.");
 
-        const txHash = await sendEthOnChain(signer, {
-          receiver: stealthAddress,
-          ephemeralPubKey,
-          viewTag,
-          amount,
-        });
+        const txHash = await sendEthOnChain(
+          currentNetwork.forwarderAddress,
+          signer,
+          {
+            receiver: stealthAddress,
+            ephemeralPubKey,
+            viewTag,
+            amount,
+          },
+        );
 
         // Proactive: Also push a "pointer" to GunDB for instant discovery
         if (gun) {
@@ -386,7 +394,7 @@ export const SendStealth: React.FC = () => {
               <span>Direct Transfer</span>
             </button>
             <a
-              href={`https://sepolia.basescan.org/address/${stealthAddress}`}
+              href={`${currentNetwork.explorerUrl}/address/${stealthAddress}`}
               target="_blank"
               rel="noreferrer"
               className="flex-1 flex items-center justify-center text-xs font-bold font-heading uppercase tracking-widest opacity-40 hover:opacity-100 transition-all bg-base-300 rounded-full h-[56px] border border-base-100/10"

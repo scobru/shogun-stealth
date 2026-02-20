@@ -10,6 +10,8 @@ import RegisterStealth from "./RegisterStealth";
 import SendStealth from "./SendStealth";
 import ScanAnnouncements from "./ScanAnnouncements";
 
+import { useNetwork } from "../lib/NetworkContext";
+
 type Tab = "register" | "send" | "scan";
 
 const tabs: { id: Tab; label: string; icon: string; desc: string }[] = [
@@ -35,6 +37,7 @@ const tabs: { id: Tab; label: string; icon: string; desc: string }[] = [
 
 export const StealthDashboard: React.FC = () => {
   const { isLoggedIn } = useShogun();
+  const { currentNetwork } = useNetwork();
   const [activeTab, setActiveTab] = useState<Tab>("register");
 
   const activeTabInfo = tabs.find((t) => t.id === activeTab)!;
@@ -62,7 +65,7 @@ export const StealthDashboard: React.FC = () => {
           <div className="flex items-center gap-2 bg-base-300 px-6 py-2.5 rounded-full border border-primary/5">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">
-              Neural Network Active
+              {currentNetwork.name} Active
             </span>
           </div>
           <div className="flex items-center gap-2 bg-success/10 text-success px-6 py-2.5 rounded-full border border-success/20">
