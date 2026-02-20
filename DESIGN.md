@@ -1,46 +1,96 @@
-Ruolo: Agisci come un Esperto di UI/UX Design e Sviluppatore Frontend avanzato, specializzato in Tailwind CSS e DaisyUI.
+# Material Expressive Design System (Google 2026)
 
-Obiettivo: Voglio configurare e personalizzare DaisyUI affinché il suo aspetto (look and feel) replichi fedelmente il "Material Expressive" di Google (lo stile delle app Google nel 2026, evoluzione di Material 3/Material You).
+This document defines the visual identity and UI/UX guidelines for the Shogun ecosystem, inspired by the "Expressive Bloom" evolution of Material You.
 
-Contesto di Design (Google 2026 - Material Expressive):
-Il design deve comunicare un senso di modernità, accessibilità, forme morbide, colori dinamici basati su tonalità e una chiara gerarchia visiva senza dipendere pesantemente dalle ombre (elevation).
+## 🎨 Visual Identity
 
-Genera il file tailwind.config.js, le eventuali regole CSS di base in style.css e un esempio di HTML con alcune classi chiave, seguendo rigorosamente queste linee guida:
+### 1. Color Palette (Dynamic Tones)
 
-1. Sistema di Colori (Tonal Palettes):
+The system uses high-contrast, vibrant accents paired with deep surfaces.
 
-Mappa i temi di DaisyUI (primary, secondary, accent, base-100, base-200, base-300) per simulare i Surface Colors e i Primary/Secondary Tones del Material Expressive.
+- **Primary (Vibrant Lime)**: `#D4E157` - Used for primary actions, feature highlights, and active states.
+- **Surface (Deep Charcoal)**: `#131314` - The main background for dark mode.
+- **Surface Containers**:
+  - `base-100`: `#131314` (Background)
+  - `base-200`: `#1E1F20` (Cards, Sidebars)
+  - `base-300`: `#2B2C2E` (Modals, Active Items)
+- **Accent (Muted Pink/Lavender)**: `#F4B4CE` - Used for secondary expressive elements.
 
-base-100 deve essere il colore di sfondo principale. base-200 e base-300 devono fungere da Surface Container (per card e modali) con leggere variazioni di luminosità/tinta, non solo grigi.
+### 2. Typography
 
-Usa colori pastello o saturi ma morbidi.
+- **Primary Font**: `Inter` or `Outfit` (Geometric Sans-Serif).
+- **Headings**: "Expressive" style. Large, medium/semi-bold weight, with slightly tightened letter-spacing (`-0.02em`).
+- **Body**: Clean, high readability, ample line height (`1.6`).
 
-2. Forme e Raggi di Curvatura (Shapes):
+---
 
-Sovrascrivi le variabili CSS di DaisyUI per i border-radius.
+## 📐 Layout & Surfaces
 
-I bottoni standard (btn) devono essere a forma di pillola (completamente arrotondati, es. rounded-full).
+### 1. Shape System (High Curvature)
 
-Le card (card) e i contenitori modali devono avere bordi molto arrotondati (es. rounded-[28px] o rounded-3xl), tipici delle app Google recenti.
+Material Expressive 2026 favors organic, soft shapes over sharp corners.
 
-3. Tipografia (Google Sans style):
+- **Buttons/Chips**: `rounded-full` (Pill shape).
+- **Cards/Sections**: `rounded-[28px]` or `3xl`.
+- **Modals/Dialogs**: `rounded-[32px]`.
+- **Input Fields**: `rounded-2xl` with internal padding.
 
-Imposta un font sans-serif pulito e geometrico come font principale (es. Outfit, Plus Jakarta Sans o Inter se Google Sans non è disponibile).
+### 2. Elevation & Hierarchy
 
-I titoli (h1, h2) devono essere "Expressive": grandi, con pesi variabili (es. medium o semi-bold) e tracking (letter-spacing) leggermente ridotto.
+Avoid traditional drop shadows. Use **Surface Toning** and **Thin Outlines**.
 
-4. Elevation e Bordi (Shadows & Outlines):
+- **Level 0 (Background)**: `base-100`.
+- **Level 1 (Card)**: `base-200`.
+- **Level 2 (Hover/Modal)**: `base-300` or a very subtle `1px` border in a slightly lighter shade.
+- **Gloom/Glow**: For high-emphasis elements, use colored, ultra-diffuse shadows (e.g., `shadow-[0_0_40px_-10px_rgba(212,225,87,0.2)]`).
 
-Riduci drasticamente l'uso delle ombre nette (drop shadows classiche).
+---
 
-Per l'elevation (distinguere le card dallo sfondo), usa variazioni di colore di sfondo (Surface 1, Surface 2) o un leggerissimo e impercettibile bordo in tinta (outline design).
+## 🧩 Component Specifications
 
-Se usi le ombre, usa ombre colorate e molto diffuse.
+### 1. Action Buttons
 
-5. Componenti Specifici:
+- **Standard**: Pill-shaped, semi-bold text, subtle hover transition (scale up slightly).
+- **FAB (Floating Action Button)**: Large, `rounded-3xl`, high-contrast color (Primary), fixed bottom-right.
 
-Floating Action Button (FAB): Grande, smussato (rounded-2xl o 3xl), colorato e in basso a destra.
+### 2. Interaction Feedback
 
-Bottom Navigation: Alta, spaziosa, con icone all'interno di "pillole" attive che indicano lo stato selezionato.
+- **Active States**: Use a "Pill" background behind icons or text.
+- **Micro-animations**: Smooth `200ms` transitions for all hover and active states.
 
-Input Text: Stile "Filled" o "Outlined" del Material 3 (sfondo leggermente scuro o bordo arrotondato con etichetta interna).
+### 3. Navigation
+
+- **Top Bar**: Minimalist, glassmorphism effect (`backdrop-blur-md`) with low opacity background.
+- **Bottom Nav**: High containers, icons inside active pill indicators.
+
+---
+
+## 🛠️ Tailwind & DaisyUI Config
+
+```javascript
+// tailwind.config.js snippet
+module.exports = {
+  daisyui: {
+    themes: [
+      {
+        materialExpressive: {
+          primary: "#D4E157", // Vibrant Lime
+          secondary: "#F4B4CE", // Soft Pink
+          accent: "#C1E8FF", // Light Blue
+          neutral: "#1E1F20",
+          "base-100": "#131314", // Core Surface
+          "base-200": "#1E1F20", // Surface Container
+          "base-300": "#2B2C2E", // Surface Container High
+          info: "#7CAFEC",
+          success: "#B9E9B3",
+          warning: "#F1E5AC",
+          error: "#F3B4AD",
+          "--rounded-box": "1.75rem", // 28px
+          "--rounded-btn": "9999px", // Pill
+          "--rounded-badge": "9999px",
+        },
+      },
+    ],
+  },
+};
+```

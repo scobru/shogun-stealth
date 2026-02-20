@@ -5,12 +5,18 @@
 
 import React, { useState, useEffect } from "react";
 import { useShogun } from "shogun-button-react";
+import { ethers } from "ethers";
 import { publishStealthKeys, getStealthKeys } from "../lib/gunStealth";
 import {
   deriveStealthKeysFromGun,
   gunPairToEthAddress,
   StealthKeys,
 } from "../lib/stealthCore";
+import {
+  registerOnChain,
+  registerOnChainOnBehalf,
+  getOnChainStealthKeys,
+} from "../lib/stealthContract";
 
 const CopyIcon = () => (
   <svg
@@ -61,6 +67,11 @@ export const RegisterStealth: React.FC = () => {
   } | null>(null);
   const [alias, setAlias] = useState("");
   const [userPub, setUserPub] = useState<string>("");
+  const [isOnChain, setIsOnChain] = useState(false);
+  const [isRegisteringOnChain, setIsRegisteringOnChain] = useState(false);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+
+  const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532 in hex
 
   useEffect(() => {
     if (!isLoggedIn || !core) return;
@@ -103,6 +114,17 @@ export const RegisterStealth: React.FC = () => {
     });
   }, [userPub, core, stealthKeys]);
 
+  // Check on-chain registry
+  useEffect(() => {
+    if (!(core as any)?.signer?.provider || !ethAddress) return;
+    getOnChainStealthKeys((core as any).signer.provider, ethAddress).then(
+      (keys) => {
+        if (keys) setIsOnChain(true);
+        else setIsOnChain(false);
+      },
+    );
+  }, [core, ethAddress]);
+
   const handlePublish = async () => {
     if (!userPub || !stealthKeys || !(core as any)?.gun) return;
     setIsPublishing(true);
@@ -112,12 +134,129 @@ export const RegisterStealth: React.FC = () => {
       setIsRegistered(true);
       setStatus({
         type: "success",
-        msg: "✅ Dual stealth keys published on Gun!",
+        msg: "✅ Dual stealth keys published on Gun! SYNCING...",
       });
+      // Trigger on-chain check
+      if ((core as any)?.signer?.provider && ethAddress) {
+        getOnChainStealthKeys((core as any).signer.provider, ethAddress).then(
+          (keys) => {
+            if (keys) setIsOnChain(true);
+          },
+        );
+      }
     } catch (e: any) {
       setStatus({ type: "error", msg: `Error: ${e.message}` });
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleConnectWallet = async () => {
+    if (!(window as any).ethereum) {
+      setStatus({
+        type: "error",
+        msg: "MetaMask not detected. Please install it.",
+      });
+      return;
+    }
+    try {
+      setStatus({ type: "info", msg: "Connecting to wallet..." });
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const network = await provider.getNetwork();
+
+      if (network.chainId !== 84532n) {
+        setStatus({ type: "info", msg: "Switching to Base Sepolia..." });
+        try {
+          await (window as any).ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+          });
+        } catch (switchError: any) {
+          // This error code indicates that the chain has not been added to MetaMask.
+          if (switchError.code === 4902) {
+            await (window as any).ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: BASE_SEPOLIA_CHAIN_ID,
+                  chainName: "Base Sepolia",
+                  rpcUrls: ["https://sepolia.base.org"],
+                  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                  blockExplorerUrls: ["https://sepolia.basescan.org"],
+                },
+              ],
+            });
+          } else {
+            throw switchError;
+          }
+        }
+      }
+
+      await provider.send("eth_requestAccounts", []);
+      // Re-trigger the check for on-chain keys if everything is ready
+      setIsWalletConnected(true);
+      setStatus({
+        type: "success",
+        msg: "Wallet connected to Base Sepolia! You can now register on-chain.",
+      });
+    } catch (e: any) {
+      setStatus({ type: "error", msg: `Connection failed: ${e.message}` });
+    }
+  };
+
+  const handleRegisterOnChain = async () => {
+    setStatus(null);
+    if (!stealthKeys) {
+      setStatus({ type: "error", msg: "Error: Stealth keys not generated." });
+      return;
+    }
+    let signer = (core as any)?.signer;
+
+    if (!signer && (window as any).ethereum) {
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const network = await provider.getNetwork();
+      if (network.chainId !== 84532n) {
+        setStatus({
+          type: "error",
+          msg: "Error: Please switch to Base Sepolia network.",
+        });
+        return;
+      }
+      signer = await provider.getSigner();
+    }
+
+    if (!signer) {
+      setStatus({
+        type: "error",
+        msg: "Error: No wallet detected. Please connect MetaMask or compatible wallet.",
+      });
+      return;
+    }
+
+    setIsRegisteringOnChain(true);
+    try {
+      // Use the "On Behalf" flow:
+      // 1. neuralPriv signs the keys
+      // 2. MetaMask (signer) pays the gas
+      await registerOnChainOnBehalf(
+        signer,
+        stealthKeys.neuralPriv,
+        stealthKeys,
+      );
+
+      setIsOnChain(true);
+      setStatus({
+        type: "success",
+        msg: "✅ Stealth keys registered for Neural Identity on-chain!",
+      });
+    } catch (e: any) {
+      console.error("Chain registration error:", e);
+      setStatus({
+        type: "error",
+        msg: `Chain Error: ${e.message || "Unknown error"}`,
+      });
+    } finally {
+      setIsRegisteringOnChain(false);
     }
   };
 
@@ -148,15 +287,25 @@ export const RegisterStealth: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Status Banner */}
-      {isRegistered && (
-        <div className="bg-success text-success-content rounded-full px-6 py-3 flex items-center justify-center gap-3 shadow-lg shadow-success/10">
-          <CheckIcon />
-          <span className="font-heading font-extrabold text-xs uppercase tracking-widest">
-            Identity Registered on Gun
-          </span>
-        </div>
-      )}
+      {/* Status Banners */}
+      <div className="flex flex-wrap gap-4 justify-center">
+        {isRegistered && (
+          <div className="bg-success/10 text-success border border-success/20 rounded-full px-6 py-2.5 flex items-center gap-3 shadow-sm">
+            <CheckIcon />
+            <span className="font-heading font-extrabold text-[10px] uppercase tracking-widest">
+              Gun Identity Ready
+            </span>
+          </div>
+        )}
+        {isOnChain && (
+          <div className="bg-primary/10 text-primary border border-primary/20 rounded-full px-6 py-2.5 flex items-center gap-3 shadow-sm">
+            <CheckIcon />
+            <span className="font-heading font-extrabold text-[10px] uppercase tracking-widest">
+              On-Chain Identity Ready
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Keys Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -228,36 +377,67 @@ export const RegisterStealth: React.FC = () => {
       </div>
 
       {/* Alias & Action */}
-      <div className="flex flex-col md:flex-row gap-6 items-end pt-4">
-        <div className="flex-1 space-y-2 w-full">
-          <label className="text-xs font-bold opacity-40 tracking-widest uppercase ml-4">
-            Display Alias (optional)
+      <div className="flex flex-col md:flex-row gap-8 items-end pt-8">
+        <div className="flex-1 space-y-3 w-full">
+          <label className="text-[10px] font-bold opacity-40 tracking-[0.2em] uppercase ml-6">
+            Neural Alias
           </label>
           <input
             type="text"
-            className="input-material w-full"
-            placeholder="e.g. alice.shogun"
+            className="input-material w-full !bg-base-200 border-2 border-transparent focus:border-primary/20 h-[56px]"
+            placeholder="e.g. neuro.shogun"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
           />
         </div>
 
-        <button
-          className={`btn-primary-bloom px-10 h-[50px] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed`}
-          onClick={handlePublish}
-          disabled={isPublishing}
-        >
-          {isPublishing ? (
-            <span className="loading loading-spinner loading-xs"></span>
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <button
+            className="btn-primary-bloom w-full sm:w-auto disabled:opacity-30"
+            onClick={handlePublish}
+            disabled={isPublishing}
+          >
+            {isPublishing ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <>
+                <span className="text-xl">📡</span>
+                <span>
+                  {isRegistered ? "Sync Identity" : "Publish Identity"}
+                </span>
+              </>
+            )}
+          </button>
+
+          {!(core as any)?.signer && !isWalletConnected ? (
+            <button
+              className="btn-secondary-bloom w-full sm:w-auto"
+              onClick={handleConnectWallet}
+            >
+              <span className="text-xl">🦊</span>
+              <span>Connect Wallet</span>
+            </button>
           ) : (
-            <>
-              <span>📡</span>
-              <span>
-                {isRegistered ? "Update Registry" : "Secure Registry"}
-              </span>
-            </>
+            <button
+              className={`w-full sm:w-auto rounded-full px-10 h-[56px] font-heading font-bold uppercase tracking-widest text-xs border-2 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 ${
+                isOnChain
+                  ? "bg-transparent border-primary/30 text-primary"
+                  : "bg-primary text-base-100 border-primary shadow-xl shadow-primary/20"
+              } disabled:opacity-30`}
+              onClick={handleRegisterOnChain}
+              disabled={isRegisteringOnChain}
+            >
+              {isRegisteringOnChain ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                <>
+                  <span className="text-xl">⛓️</span>
+                  <span>{isOnChain ? "Regen ID" : "Register On-Chain"}</span>
+                </>
+              )}
+            </button>
           )}
-        </button>
+        </div>
       </div>
 
       {status && (

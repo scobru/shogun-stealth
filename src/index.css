@@ -3,16 +3,22 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* === MATERIAL EXPRESSIVE THEME (GOOGLE 2026) === */
-
-:root {
+@theme {
   --font-heading: "Outfit", sans-serif;
   --font-expressive: "Plus Jakarta Sans", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --radius-material-xl: 28px;
+  --radius-material-2xl: 32px;
+
+  --color-primary: #d4e157;
+  --color-secondary: #f4b4ce;
+  --color-base-100: #131314;
+  --color-base-200: #1e1f20;
+  --color-base-300: #2b2c2e;
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   background-color: hsl(var(--b1));
   color: hsl(var(--bc));
   -webkit-font-smoothing: antialiased;
@@ -139,6 +145,15 @@ body {
 /* Hero Badge */
 .hero-badge {
   @apply bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold font-heading uppercase tracking-widest inline-block mb-4;
+}
+
+/* Expressive Buttons */
+.btn-primary-bloom {
+  @apply bg-primary text-base-100 rounded-full font-heading font-bold uppercase tracking-widest text-xs flex items-center gap-3 px-10 h-[56px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-primary/20;
+}
+
+.btn-secondary-bloom {
+  @apply bg-secondary text-base-100 rounded-full font-heading font-bold uppercase tracking-widest text-xs flex items-center gap-3 px-10 h-[56px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-secondary/20;
 }
 
 /* Scrollbar */

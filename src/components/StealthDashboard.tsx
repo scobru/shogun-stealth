@@ -42,98 +42,113 @@ export const StealthDashboard: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-12">
       {/* Hero Header */}
-      <div className="surface-container-high p-8 md:p-14 text-center relative overflow-hidden flex flex-col items-center">
-        <div className="hero-badge">Next Gen Privacy</div>
-        <h1 className="hero-title">
-          Shogun <span className="text-primary italic">Stealth</span>
+      <div className="surface-container-high p-12 md:p-20 text-center relative overflow-hidden flex flex-col items-center">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary/40 to-primary/0" />
+        <div className="hero-badge !bg-primary/20 !text-primary !mb-6">
+          Neural Protocol v1.0
+        </div>
+        <h1 className="font-heading text-5xl md:text-7xl font-extrabold tracking-tighter mb-4">
+          Shogun <span className="text-primary">Stealth</span>
         </h1>
-        <p className="text-lg font-medium opacity-60 max-w-2xl mx-auto leading-relaxed mt-2">
-          Private, one-time Ethereum addresses powered by the Dual-Key Stealth
-          model and GunDB. Complete ownership, zero trace.
+        <p className="text-xl font-medium opacity-50 max-w-2xl mx-auto leading-relaxed">
+          Zero-trace Ethereum transactions powered by GunDB and
+          <span className="text-primary/80 font-bold ml-1">
+            Dual-Key Stealth
+          </span>{" "}
+          technology.
         </p>
 
-        <div className="flex justify-center gap-4 mt-8 flex-wrap">
-          <span className="badge-custom">
-            <span className="badge-dot bg-primary shadow-[0_0_8px_hsl(var(--p))]" />{" "}
-            SHIP-03 Standard
-          </span>
-          <span className="badge-custom">
-            <span className="badge-dot bg-success shadow-[0_0_8px_hsl(var(--su))]" />{" "}
-            Decentralized
-          </span>
-          <span className="badge-custom">
-            <span className="badge-dot bg-info shadow-[0_0_8px_hsl(var(--in))]" />{" "}
-            Pulse Integrated
-          </span>
+        <div className="flex justify-center gap-6 mt-10 flex-wrap">
+          <div className="flex items-center gap-2 bg-base-300 px-6 py-2.5 rounded-full border border-primary/5">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+              Neural Network Active
+            </span>
+          </div>
+          <div className="flex items-center gap-2 bg-success/10 text-success px-6 py-2.5 rounded-full border border-success/20">
+            <span className="text-[10px] font-bold uppercase tracking-widest">
+              Decentralized
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Auth Gate */}
       {!isLoggedIn && (
-        <div className="surface-container p-8 text-center space-y-6 flex flex-col items-center">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-2xl font-bold font-heading mb-2">
-              Connect to Stealth
-            </h2>
-            <p className="text-base-content/60 mb-8 font-medium">
-              You need to be authenticated with Shogun to generate keys or scan
-              for private transactions.
-            </p>
-            <div className="flex justify-center">
-              <ShogunButton className="btn-primary-bloom shadow-xl shadow-primary/20 hover:shadow-2xl transition-all" />
+        <div className="surface-container p-12 text-center flex flex-col items-center">
+          <div className="max-w-md mx-auto space-y-8">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold font-heading">
+                Gateway to Privacy
+              </h2>
+              <p className="text-base-content/40 font-medium leading-relaxed">
+                Connect your neural identity to access private transaction
+                vaults and cryptographic scanning tools.
+              </p>
+            </div>
+            <div className="flex justify-center scale-110">
+              <ShogunButton className="btn-primary-bloom" />
             </div>
           </div>
         </div>
       )}
 
-      {/* How it works */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="surface-container p-8 flex flex-col items-center text-center hover:bg-base-300 transition-colors">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl mb-4">
-            🧬
+      {/* Protocol Steps */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          {
+            icon: "🧬",
+            title: "Generate",
+            desc: "Derive spending and viewing keys from your neural pair.",
+            color: "primary",
+          },
+          {
+            icon: "📤",
+            title: "Transmit",
+            desc: "Send funds to one-time addresses without linking identities.",
+            color: "secondary",
+          },
+          {
+            icon: "🔍",
+            title: "Discover",
+            desc: "Scan the abyss for funds using only your viewing key.",
+            color: "accent",
+          },
+        ].map((step, i) => (
+          <div
+            key={i}
+            className="surface-container p-10 flex flex-col items-center text-center group hover:bg-base-200 transition-all cursor-default"
+          >
+            <div
+              className={`w-16 h-16 rounded-3xl bg-${step.color}/10 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform`}
+            >
+              {step.icon}
+            </div>
+            <h3 className="font-heading font-extrabold text-xl mb-3">
+              {step.title}
+            </h3>
+            <p className="text-[13px] font-medium text-base-content/40 leading-relaxed">
+              {step.desc}
+            </p>
           </div>
-          <h3 className="font-heading font-extrabold text-lg mb-2">
-            1. Register
-          </h3>
-          <p className="text-sm font-medium text-base-content/50 leading-relaxed">
-            Publish your Dual Stealth Public Keys: Spending (S) and Viewing (V).
-          </p>
-        </div>
-        <div className="surface-container p-8 flex flex-col items-center text-center hover:bg-base-300 transition-colors">
-          <div className="w-14 h-14 rounded-full bg-secondary/10 flex items-center justify-center text-2xl mb-4">
-            📤
-          </div>
-          <h3 className="font-heading font-extrabold text-lg mb-2">2. Send</h3>
-          <p className="text-sm font-medium text-base-content/50 leading-relaxed">
-            Generate a unique Stealth Address (P) for your recipient on the fly.
-          </p>
-        </div>
-        <div className="surface-container p-8 flex flex-col items-center text-center hover:bg-base-300 transition-colors">
-          <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-2xl mb-4">
-            🔍
-          </div>
-          <h3 className="font-heading font-extrabold text-lg mb-2">3. Scan</h3>
-          <p className="text-sm font-medium text-base-content/50 leading-relaxed">
-            Detect incoming payments with your View Key without exposing funds.
-          </p>
-        </div>
+        ))}
       </div>
 
       {/* Tab Navigation */}
-      <div className="space-y-8">
+      <div className="space-y-12">
         <div className="flex justify-center">
-          <div className="tab-pills">
+          <div className="bg-base-200 p-2 rounded-full border border-primary/5 flex gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                className={`tab-pill flex items-center gap-2 ${
+                className={`flex items-center gap-3 px-8 py-4 rounded-full text-sm font-bold transition-all ${
                   activeTab === tab.id
-                    ? "tab-pill-active"
+                    ? "bg-primary text-base-100 shadow-xl shadow-primary/20 scale-105"
                     : "opacity-40 hover:opacity-100"
                 }`}
                 onClick={() => setActiveTab(tab.id)}
               >
-                <span className="text-lg">{tab.icon}</span>
+                <span className="text-xl">{tab.icon}</span>
                 <span className="font-expressive tracking-tight">
                   {tab.label}
                 </span>

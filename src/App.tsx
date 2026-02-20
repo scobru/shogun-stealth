@@ -47,22 +47,24 @@ const MainApp: React.FC = () => {
     <div className="app-shell">
       <header className="navbar-custom">
         <div className="navbar-inner">
-          <div className="navbar-title">
-            <img src={logo} alt="Shogun Stealth" className="w-12 h-12" />
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Shogun Stealth" className="w-14 h-14" />
             <div className="flex flex-col">
-              <span className="font-heading text-2xl tracking-tight">
+              <span className="font-heading text-3xl font-bold tracking-tight text-primary">
                 Shogun Stealth
               </span>
-              <p className="navbar-subtitle font-medium opacity-60">
-                Private stealth transactions on Gun
+              <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em]">
+                Private Neural Transactions
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className={`badge-custom ${isLoggedIn ? "success" : "error"}`}>
+            <div
+              className={`badge-custom ${isLoggedIn ? "!bg-success/20 !text-success" : "!bg-error/20 !text-error"}`}
+            >
               <span className="badge-dot" />
               <span className="font-bold text-[10px] tracking-widest">
-                {isLoggedIn ? "Authenticated" : "Not authenticated"}
+                {isLoggedIn ? "ONLINE" : "OFFLINE"}
               </span>
             </div>
             <ThemeToggle />
@@ -75,17 +77,17 @@ const MainApp: React.FC = () => {
         <StealthDashboard />
       </main>
 
-      <footer className="w-full py-12 px-1 mt-auto border-t border-base-content/5">
-        <div className="max-w-1040 mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-sm font-medium opacity-40 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-6">
+      <footer className="w-full py-16 px-6 mt-auto bg-base-200/50 border-t border-primary/5">
+        <div className="max-w-1040 mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.15em] opacity-40">
               <a
                 href="https://github.com/scobru/shogun-stealth"
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-primary transition-colors"
               >
-                GitHub
+                Repo
               </a>
               <a
                 href="https://t.me/shogun_eco"
@@ -93,32 +95,23 @@ const MainApp: React.FC = () => {
                 rel="noreferrer"
                 className="hover:text-primary transition-colors"
               >
-                Support
+                Network
               </a>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span>Built with 💜 at</span>
               <a
                 href="https://shogun-eco.xyz/"
                 target="_blank"
                 rel="noreferrer"
-                className="font-bold text-base-content/80 hover:text-primary transition-colors"
+                className="hover:text-primary transition-colors"
               >
-                Shogun Ecosystem
+                Ecosystem
               </a>
             </div>
 
-            <div className="text-[10px] tracking-widest uppercase opacity-60">
-              by{" "}
-              <a
-                href="https://github.com/scobru"
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold"
-              >
-                scobru
-              </a>
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-primary/10 hidden md:block" />
+              <span className="text-[10px] font-medium opacity-30">
+                Created with ❤️ by the Shogun Community
+              </span>
             </div>
           </div>
         </div>

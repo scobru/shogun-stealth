@@ -40,10 +40,12 @@ function normalizePublicKey(publicKey: string): string {
             return "0x" + normalized;
         }
 
-        // If it's 64 hex chars (missing prefix byte), add 0x04 uncompressed prefix
-        // This is critical for GunDB public keys.
+        // If it's 64 hex chars (32 bytes), it might be a pkx (X coordinate).
+        // On-chain announcements from PaymentForwarder only emit X.
+        // We'll treat this as "need reconstruction" later, but for now, 
+        // we'll return it as 0x + hex and let the consumer handle prefixes.
         if (normalized.length === 64) {
-            return ethers.SigningKey.computePublicKey("0x04" + normalized, true);
+            return "0x" + normalized;
         }
 
         throw new Error(`Invalid public key length: ${normalized.length}`);
@@ -62,6 +64,7 @@ export interface StealthKeys {
         priv: string;
         pub: string;
     };
+    neuralPriv: string; // Private key for the Neural Identity (derived from Gun)
 }
 
 export interface StealthAnnouncement {
@@ -77,7 +80,11 @@ export interface StealthAnnouncement {
  * Derive stealth keys from Gun SEA identity using SHIP-03 salts.
  */
 export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
-    // SHIP-03 compliant derivation
+    // 1. Derive Neural Identity (Legacy identity address derivation)
+    const neuralSeed = keccak_256(ethers.toUtf8Bytes(seaEpriv));
+    const neuralPriv = toHex(neuralSeed);
+
+    // 2. Derive Stealth Keys (SHIP-03 compliant derivation)
     const viewingSeed = ethers.keccak256(
         ethers.toUtf8Bytes("SHIP-03-VIEWING" + seaEpriv)
     );
@@ -97,6 +104,7 @@ export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
             priv: viewingWallet.privateKey,
             pub: normalizePublicKey(viewingWallet.signingKey.publicKey),
         },
+        neuralPriv,
     };
 }
 
@@ -177,41 +185,48 @@ export function checkStealthAddress(
     announcedAddress: string,
     viewTag?: string
 ): boolean {
-    try {
-        const normalizedEphemeralKey = normalizePublicKey(ephemeralPubKey);
-
-        // 1. Optional fast tag check
-        if (viewTag && viewTag !== "0x00" && viewTag !== "0x") {
-            const viewingWallet = new ethers.Wallet(viewingPrivKey);
-            const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
-            const hTag = ethers.keccak256(ssTag);
-            const computedTag = hTag.slice(0, 6).toLowerCase();
-            const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
-
-            if (computedTag !== normalizedTag) {
-                // Log but don't fail yet, to see if address matches
-                console.debug(`[Stealth] Tag mismatch: ${computedTag} vs registry=${normalizedTag}`);
-            }
-        }
-
-        // 2. Definitive check by deriving the signer
+    const tryCheck = (pk: string) => {
         try {
+            const normalizedEphemeralKey = normalizePublicKey(pk);
+
+            // 1. Optional fast tag check
+            if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+                const viewingWallet = new ethers.Wallet(viewingPrivKey);
+                const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
+                const hTag = ethers.keccak256(ssTag);
+                const computedTag = hTag.slice(0, 6).toLowerCase();
+                const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+
+                if (computedTag !== normalizedTag) {
+                    return false;
+                }
+            }
+
+            // 2. Definitive check
             openStealthAddress(
                 announcedAddress,
-                ephemeralPubKey,
+                normalizedEphemeralKey,
                 viewingPrivKey,
                 spendingPrivKey
             );
-            console.log(`[Stealth] ✅ Ownership verified for ${announcedAddress}`);
             return true;
-        } catch (e) {
-            // Address doesn't match this derivation
+        } catch {
             return false;
         }
-    } catch (error) {
-        console.warn("[Stealth] checkStealthAddress error:", error);
-        return false;
+    };
+
+    // If pk is 33 bytes (66 chars + 0x), try as is.
+    // If pk is 32 bytes (64 chars + 0x), try with both 0x02 and 0x03 prefixes (pkx reconstruction).
+    let pk = ephemeralPubKey;
+    if (pk.startsWith("0x")) pk = pk.slice(2);
+
+    if (pk.length === 66) {
+        return tryCheck("0x" + pk);
+    } else if (pk.length === 64) {
+        return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
     }
+
+    return false;
 }
 
 /**

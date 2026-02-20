@@ -1,7 +1,7 @@
 /**
  * SendStealth Component
- * Allows a user to generate a one-time stealth address for a Gun-registered recipient
- * and publish the announcement to Gun.
+ * Allows a user to generate a one-time stealth address for a recipient
+ * and broadcast the signal to GunDB or On-Chain.
  */
 
 import React, { useState } from "react";
@@ -14,6 +14,9 @@ import {
   publishAnnouncement,
   type StealthRegistryEntry,
 } from "../lib/gunStealth";
+import { sendEthOnChain, getOnChainStealthKeys } from "../lib/stealthContract";
+
+const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
 
 const StepHeader = ({
   n,
@@ -55,6 +58,7 @@ export const SendStealth: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [announced, setAnnounced] = useState(false);
+  const [amount, setAmount] = useState("0.01"); // Default amount
   const [status, setStatus] = useState<{
     type: "success" | "error" | "info";
     msg: string;
@@ -72,25 +76,56 @@ export const SendStealth: React.FC = () => {
   };
 
   const lookupRecipient = async () => {
-    if (!gun || !recipientPub.trim()) return;
+    const input = recipientPub.trim();
+    if (!input) return;
     setIsLookingUp(true);
     setStatus(null);
     setRecipientEntry(null);
     setStealthAddress("");
     setAnnounced(false);
     setStep(1);
+
     try {
-      const entry = await getStealthKeys(gun, recipientPub.trim());
+      // 1. Check if input is an Ethereum address (On-Chain Lookup)
+      if (ethers.isAddress(input)) {
+        let provider = (core as any)?.signer?.provider;
+
+        // Fallback to public RPC if Shogun provider is not ready
+        if (!provider) {
+          provider = new ethers.JsonRpcProvider(BASE_SEPOLIA_RPC);
+        }
+
+        const chainKeys = await getOnChainStealthKeys(provider, input);
+        if (chainKeys) {
+          setRecipientEntry({
+            pub: input,
+            alias: `Neural ID: ${input.slice(0, 6)}...`,
+            spendingPubKey: chainKeys.spending,
+            viewingPubKey: chainKeys.viewing,
+            updatedAt: Date.now(),
+          });
+          setStatus({
+            type: "success",
+            msg: "🎯 Found on Base Sepolia Registry!",
+          });
+          setStep(2);
+          return;
+        }
+      }
+
+      // 2. Fallback to GunDB Lookup
+      if (!gun) throw new Error("GunDB not available.");
+      const entry = await getStealthKeys(gun, input);
       if (!entry) {
         setStatus({
           type: "error",
-          msg: "Recipient not found. They must register their stealth keys first.",
+          msg: "Recipient not found in Gun or On-Chain. They must register first.",
         });
       } else {
         setRecipientEntry(entry);
         setStatus({
           type: "success",
-          msg: `✅ Found: ${entry.alias || entry.pub.slice(0, 16) + "..."}`,
+          msg: `📡 Found on Gun Pulse: ${entry.alias || entry.pub.slice(0, 16) + "..."}`,
         });
         setStep(2);
       }
@@ -127,42 +162,88 @@ export const SendStealth: React.FC = () => {
     }
   };
 
-  const announceOnGun = async () => {
-    if (!gun || !stealthAddress || !ephemeralPubKey || !recipientEntry) return;
+  const broadcastSignal = async (mode: "gun" | "chain") => {
+    if (!stealthAddress || !ephemeralPubKey || !recipientEntry) return;
     setIsPublishing(true);
     setStatus(null);
     try {
-      await publishAnnouncement(gun, {
-        ephemeralPubKey,
-        stealthAddress,
-        viewTag,
-      });
+      if (mode === "gun") {
+        if (!gun) throw new Error("GunDB not available.");
+        await publishAnnouncement(gun, {
+          ephemeralPubKey,
+          stealthAddress,
+          viewTag,
+        });
+        setStatus({ type: "success", msg: "📡 Signal broadcasted to GunDB!" });
+      } else {
+        let signer = (core as any)?.signer;
+
+        // Fallback to MetaMask if core.signer is not available
+        if (!signer && (window as any).ethereum) {
+          const provider = new ethers.BrowserProvider((window as any).ethereum);
+          signer = await provider.getSigner();
+        }
+
+        if (!signer) throw new Error("Wallet not connected.");
+
+        const txHash = await sendEthOnChain(signer, {
+          receiver: stealthAddress,
+          ephemeralPubKey,
+          viewTag,
+          amount,
+        });
+
+        // Proactive: Also push a "pointer" to GunDB for instant discovery
+        if (gun) {
+          try {
+            await publishAnnouncement(gun, {
+              ephemeralPubKey,
+              stealthAddress,
+              viewTag,
+              metadata: txHash, // Store txHash in metadata
+            });
+            console.log(
+              "[Stealth] Shadow signal pushed to GunDB for fast discovery",
+            );
+          } catch (ge) {
+            console.warn("[Stealth] Failed to push shadow signal to Gun:", ge);
+          }
+        }
+
+        setStatus({
+          type: "success",
+          msg: `⛓️ Atomic Signal Broadcasted! TX: ${txHash.slice(0, 10)}...`,
+        });
+      }
       setAnnounced(true);
       setStep(4);
-      setStatus({
-        type: "success",
-        msg: "📡 Announcement published on Gun! The recipient can now scan.",
-      });
     } catch (e: any) {
-      setStatus({ type: "error", msg: `Announce failed: ${e.message}` });
+      console.error("Broadcast error:", e);
+      setStatus({ type: "error", msg: `Broadcast failed: ${e.message}` });
     } finally {
       setIsPublishing(false);
     }
   };
 
-  const connectMetamask = async () => {
+  const handleDirectTransfer = async () => {
     if (!stealthAddress || !(window as any).ethereum) {
       setStatus({ type: "error", msg: "MetaMask not detected." });
       return;
     }
     try {
+      setStatus({ type: "info", msg: "Initiating direct transfer..." });
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
-      const from = await signer.getAddress();
+
+      const tx = await signer.sendTransaction({
+        to: stealthAddress,
+        value: ethers.parseEther(amount),
+      });
+
       setStatus({
-        type: "info",
-        msg: `Connected as ${from}. Use MetaMask to send ETH.`,
+        type: "success",
+        msg: `Sent ${amount} ETH to ${stealthAddress.slice(0, 10)}... (TX: ${tx.hash.slice(0, 8)})`,
       });
     } catch (e: any) {
       setStatus({ type: "error", msg: e.message });
@@ -182,7 +263,7 @@ export const SendStealth: React.FC = () => {
           <input
             type="text"
             className="input-material flex-1 font-mono"
-            placeholder="Recipient Gun pub..."
+            placeholder="Gun pub or 0x address..."
             value={recipientPub}
             onChange={(e) => setRecipientPub(e.target.value)}
           />
@@ -197,7 +278,7 @@ export const SendStealth: React.FC = () => {
 
         <div className="flex justify-between items-center px-4 mb-4">
           <p className="text-[10px] uppercase font-bold opacity-30 tracking-[0.2em]">
-            Protocol Registry
+            Protocol Registry (Gun)
           </p>
           <button
             className="text-[10px] uppercase font-bold text-primary opacity-60 hover:opacity-100 transition-all hover:tracking-widest"
@@ -282,22 +363,37 @@ export const SendStealth: React.FC = () => {
         className={`surface-container transition-all ${step >= 3 ? "opacity-100" : "opacity-30 grayscale"}`}
       >
         <StepHeader n={3} label="Transfer Pulse" active={step >= 3} />
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            className="flex-1 btn bg-primary text-primary-content border-none rounded-full h-[56px] font-bold shadow-lg shadow-primary/10 hover:shadow-xl transition-all"
-            onClick={connectMetamask}
-            disabled={step < 3}
-          >
-            🦊 MetaMask Connect
-          </button>
-          <a
-            href={`https://sepolia.basescan.org/address/${stealthAddress}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1 flex items-center justify-center text-xs font-bold font-heading uppercase tracking-widest opacity-40 hover:opacity-100 transition-all bg-base-300 rounded-full h-[56px]"
-          >
-            View Explorer ↗
-          </a>
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em] ml-6">
+              Pulse Amount (ETH)
+            </label>
+            <input
+              type="text"
+              className="input-material !bg-base-200"
+              placeholder="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              className="flex-1 btn-secondary-bloom w-full sm:w-auto"
+              onClick={handleDirectTransfer}
+              disabled={step < 3}
+            >
+              <span className="text-xl">🦊</span>
+              <span>Direct Transfer</span>
+            </button>
+            <a
+              href={`https://sepolia.basescan.org/address/${stealthAddress}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 flex items-center justify-center text-xs font-bold font-heading uppercase tracking-widest opacity-40 hover:opacity-100 transition-all bg-base-300 rounded-full h-[56px] border border-base-100/10"
+            >
+              View Explorer ↗
+            </a>
+          </div>
         </div>
       </div>
 
@@ -306,17 +402,30 @@ export const SendStealth: React.FC = () => {
         className={`surface-container transition-all ${step >= 3 ? "opacity-100" : "opacity-30 grayscale"}`}
       >
         <StepHeader n={4} label="Signal Finalization" active={step >= 3} />
-        <button
-          className={`w-full py-5 rounded-full font-heading font-extrabold text-xs uppercase tracking-[0.2em] transition-all shadow-xl ${
-            announced
-              ? "bg-success text-success-content shadow-success/10"
-              : "bg-base-300 hover:bg-base-100 text-base-content shadow-black/5"
-          }`}
-          onClick={announceOnGun}
-          disabled={isPublishing || announced || !stealthAddress || step < 3}
-        >
-          {announced ? "✨ SIGNAL BROADCASTED" : "📡 BROADCAST SIGNAL"}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            className={`flex-1 py-5 rounded-full font-heading font-extrabold text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl ${
+              announced
+                ? "bg-success/20 text-success"
+                : "bg-base-300 hover:bg-base-100 text-base-content"
+            }`}
+            onClick={() => broadcastSignal("gun")}
+            disabled={isPublishing || announced || !stealthAddress || step < 3}
+          >
+            {announced ? "✨ GUN SIGNAL SYNCED" : "📡 BROADCAST GUN"}
+          </button>
+          <button
+            className={`flex-1 py-5 rounded-full font-heading font-extrabold text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl ${
+              announced
+                ? "bg-primary/20 text-primary"
+                : "bg-primary text-primary-content hover:scale-[1.02]"
+            }`}
+            onClick={() => broadcastSignal("chain")}
+            disabled={isPublishing || announced || !stealthAddress || step < 3}
+          >
+            {announced ? "⛓️ CHAIN SIGNAL SYNCED" : "⛓️ BROADCAST CHAIN"}
+          </button>
+        </div>
       </div>
 
       {status && (

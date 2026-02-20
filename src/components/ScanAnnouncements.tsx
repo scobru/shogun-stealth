@@ -17,6 +17,7 @@ import {
   getAllAnnouncements,
   deleteAnnouncement,
 } from "../lib/gunStealth";
+import { fetchOnChainAnnouncements } from "../lib/stealthContract";
 
 interface OwnedAnnouncement extends StealthAnnouncement {
   privateKey: string;
@@ -96,23 +97,38 @@ export const ScanAnnouncements: React.FC = () => {
   const loadAndScan = useCallback(async () => {
     if (!gun || !stealthKeys) return;
     setIsScanning(true);
-    setStatus("Loading announcements from Gun...");
+    setStatus("Syncing network signals (Gun + Base)...");
     try {
-      const all = await getAllAnnouncements(gun);
+      // 1. Fetch from GunDB
+      const gunAnnouncements = await getAllAnnouncements(gun);
+
+      // 2. Fetch from Chain (Base Sepolia)
+      let chainAnnouncements: StealthAnnouncement[] = [];
+      if ((core as any)?.signer?.provider) {
+        try {
+          chainAnnouncements = await fetchOnChainAnnouncements(
+            (core as any).signer.provider,
+          );
+        } catch (e) {
+          console.warn("Chain fetch failed:", e);
+        }
+      }
+
+      const all = [...gunAnnouncements, ...chainAnnouncements];
+
       setTotalAnnouncements(all.length);
       setAnnouncements(all);
-      setStatus(`Scanning ${all.length} announcements...`);
+      setStatus(`Scanning ${all.length} total signals...`);
 
       const owned = scanAnnouncements(all, stealthKeys);
       setOwnedAddresses(owned);
 
       if (owned.length > 0) {
         setStatus(`✅ Found ${owned.length} address(es)! Syncing balances...`);
-        // Auto-fetch balances after finding addresses
         setTimeout(() => loadBalances("sepolia"), 100);
       } else {
         setStatus(
-          "🔍 No addresses found for your keys. (New announcements will appear in real-time if subscribed.)",
+          "🔍 No addresses found. (New signals will appear if subscribed.)",
         );
       }
     } catch (e: any) {
@@ -120,7 +136,7 @@ export const ScanAnnouncements: React.FC = () => {
     } finally {
       setIsScanning(false);
     }
-  }, [gun, stealthKeys]);
+  }, [gun, stealthKeys, core]);
 
   const loadBalances = async (network: "mainnet" | "sepolia" = "sepolia") => {
     if (ownedAddresses.length === 0) return;
@@ -379,11 +395,30 @@ export const ScanAnnouncements: React.FC = () => {
                   )}
                   <div className="text-[10px] font-bold opacity-30 mt-2 uppercase tracking-[0.2em]">
                     Detected {new Date(entry.timestamp).toLocaleDateString()}
+                    {entry.metadata &&
+                      entry.metadata.startsWith("0x") &&
+                      entry.metadata.length === 66 && (
+                        <span className="ml-2 text-primary">
+                          • On-Chain Pulse ⛓️
+                        </span>
+                      )}
                   </div>
                 </div>
               </div>
 
               <div className="flex gap-3 flex-wrap pt-4">
+                {entry.metadata &&
+                  entry.metadata.startsWith("0x") &&
+                  entry.metadata.length === 66 && (
+                    <a
+                      href={`https://sepolia.basescan.org/tx/${entry.metadata}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-primary/10 text-primary hover:bg-primary/20 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
+                    >
+                      View TX ↗
+                    </a>
+                  )}
                 <a
                   href={`https://sepolia.basescan.org/address/${entry.stealthAddress}`}
                   target="_blank"
