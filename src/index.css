@@ -1,164 +1,172 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* === CUSTOM STYLES PER SHOGUN-STARTER === */
+@theme {
+  --font-heading: "Outfit", sans-serif;
+  --font-expressive: "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --radius-material-xl: 28px;
+  --radius-material-2xl: 32px;
 
-/* Font family */
-body {
-  font-family: 'JetBrains Mono', monospace;
+  --color-primary: #d4e157;
+  --color-secondary: #f4b4ce;
+  --color-base-100: #131314;
+  --color-base-200: #1e1f20;
+  --color-base-300: #2b2c2e;
 }
 
-/* Layout generale dell'app */
+body {
+  font-family: var(--font-sans);
+  background-color: hsl(var(--b1));
+  color: hsl(var(--bc));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Expressive Typography */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-expressive {
+  font-family: var(--font-expressive);
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Material Layout */
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top left, rgba(79, 107, 246, 0.14), transparent 55%),
-              radial-gradient(circle at bottom right, rgba(45, 212, 191, 0.1), transparent 55%),
-              hsl(var(--b1));
-}
-
-/* Variante più chiara per il tema light */
-[data-theme="light"] .app-shell {
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 50%),
-              radial-gradient(circle at bottom right, rgba(45, 212, 191, 0.16), transparent 55%),
-              #f3f4f6;
-}
-
-.app-shell main {
-  flex: 1;
+  background-color: hsl(var(--b1));
 }
 
 .app-main {
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+  padding: 4rem 1.5rem;
+  width: 100%;
 }
 
-@media (min-width: 1024px) {
-  .app-main {
-    padding-top: 3rem;
-    padding-bottom: 4rem;
-  }
-}
-
-/* Header */
+/* Material Surface Navbar */
 .navbar-custom {
-  background-color: color-mix(in srgb, hsl(var(--b1)) 88%, transparent);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid hsl(var(--bc) / 0.2);
-  padding: 0.85rem 0;
+  background-color: hsl(var(--b1) / 0.8);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem 0;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.navbar-scrolled {
+  background-color: hsl(var(--b2));
+  padding: 1rem 0;
 }
 
 .navbar-inner {
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
 }
 
-.navbar-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
 }
 
-.navbar-title span {
-  display: block;
-  font-size: 1.125rem;
-  line-height: 1.35;
+/* Material Surface Container (Card replacement) */
+.surface-container {
+  background-color: hsl(var(--b2));
+  border-radius: 28px;
+  padding: 2rem;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.navbar-subtitle {
-  font-size: 0.875rem;
-  color: hsl(var(--bc) / 0.7);
+.surface-container-high {
+  background-color: hsl(var(--b3));
+  border-radius: 28px;
+  padding: 2.5rem;
 }
 
-/* Badge stato autenticazione */
+/* Filled Inputs Style */
+.input-material {
+  @apply bg-base-300 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-primary transition-all outline-none;
+}
+
+/* FAB - Floating Action Button */
+.fab-material {
+  @apply fixed bottom-8 right-8 w-16 h-16 rounded-3xl bg-primary text-primary-content shadow-lg flex items-center justify-center text-3xl hover:scale-105 active:scale-95 transition-all z-50;
+}
+
+/* Custom UI Components restyled to Material */
 .badge-custom {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-weight: 500;
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-bold text-[10px] uppercase tracking-wider bg-base-300 border border-base-200;
 }
 
 .badge-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.7);
-}
-
-.badge-custom.success {
-  background: rgba(22, 163, 74, 0.12);
-  color: hsl(var(--su));
+  @apply w-2 h-2 rounded-full;
 }
 
 .badge-custom.success .badge-dot {
-  background: #22c55e;
-}
-
-.badge-custom.error {
-  background-color: hsl(var(--er) / 0.1);
-  color: hsl(var(--er));
-  border: 1px solid hsl(var(--er));
+  @apply bg-success;
 }
 
 .badge-custom.error .badge-dot {
-  background: hsl(var(--er));
+  @apply bg-error;
 }
 
-/* Card principale */
-.content-card {
-  border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: linear-gradient(
-      135deg,
-      rgba(15, 23, 42, 0.98),
-      rgba(15, 23, 42, 0.96)
-    );
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.65);
-  color: #e5e7eb;
+/* Tab restyling to Expressive Pills */
+.tab-pills {
+  @apply inline-flex p-1.5 bg-base-200 rounded-full gap-1;
 }
 
-[data-theme="light"] .content-card {
-  background: #ffffff;
-  color: #020617;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+.tab-pill {
+  @apply px-6 py-3 rounded-full text-sm font-bold transition-all;
 }
 
-/* Footer */
-.app-footer {
-  border-top: 1px solid hsl(var(--bc) / 0.2);
-  background: color-mix(in srgb, hsl(var(--b1)) 90%, transparent);
-  margin-top: 3rem;
+.tab-pill-active {
+  @apply bg-primary text-primary-content shadow-md scale-105;
 }
 
-.app-footer-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1.75rem 1.5rem 2rem;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #9ca3af;
+/* Hero Badge */
+.hero-badge {
+  @apply bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold font-heading uppercase tracking-widest inline-block mb-4;
 }
 
-.app-footer-inner a {
-  color: #60a5fa;
+/* Expressive Buttons */
+.btn-primary-bloom {
+  @apply bg-primary text-base-100 rounded-full font-heading font-bold uppercase tracking-widest text-xs flex items-center gap-3 px-10 h-[56px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-primary/20;
 }
 
-.app-footer-inner a:hover {
-  color: #93c5fd;
+.btn-secondary-bloom {
+  @apply bg-secondary text-base-100 rounded-full font-heading font-bold uppercase tracking-widest text-xs flex items-center gap-3 px-10 h-[56px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-secondary/20;
 }
 
+/* Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--bc) / 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--bc) / 0.2);
+}

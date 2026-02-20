@@ -1,8 +1,15 @@
-# Shogun Starter
+# 🥷 Shogun Stealth (Starter)
 
-A TypeScript starter template for building decentralized applications with the Shogun ecosystem. This template includes authentication, GunDB integration, and all the essential Shogun packages pre-configured.
+A TypeScript starter template and toolkit for building privacy-preserving dApps on the Shogun ecosystem. It integrates GunDB for decentralized communication and Ethereum for stealth transactions.
 
-## Features
+## 🌟 Key Features: Stealth Addresses
+
+Unlike traditional dApps, Shogun Stealth uses a unique cryptographic link between your GunDB identity and Ethereum one-time addresses:
+
+- **Identity Mapping**: Your GunDB `epriv` (encryption private key) doubles as your primary Ethereum private key.
+- **Stealth Meta-Addresses**: Users publish their SEA `epub` keys to a decentralized registry.
+- **One-Time Addresses**: Senders derive a unique Ethereum stealth address for every transaction using ECDH (Elliptic Curve Diffie-Hellman) shared secrets.
+- **Private Announcements**: Payments are announced via GunDB, allowing receivers to "scan" and discover funds without linking them to their public identity.
 
 - **TypeScript** - Full TypeScript support with strict type checking
 - **React 18** - Modern React with hooks and functional components
@@ -81,11 +88,11 @@ shogun-starter/
 The `ExampleContent` component in `src/components/ExampleContent.tsx` is a placeholder. Replace it with your own application logic:
 
 ```tsx
-import { useShogun } from 'shogun-button-react';
+import { useShogun } from "shogun-button-react";
 
 const MyApp = () => {
   const { isLoggedIn, userPub, username, sdk } = useShogun();
-  
+
   // Your app logic here
   return <div>Your App</div>;
 };
@@ -96,22 +103,22 @@ const MyApp = () => {
 Access the Shogun SDK through the `useShogun` hook:
 
 ```tsx
-import { useShogun } from 'shogun-button-react';
+import { useShogun } from "shogun-button-react";
 
 const MyComponent = () => {
   const { isLoggedIn, userPub, username, sdk, logout } = useShogun();
-  
+
   // Access GunDB
   if (sdk?.gun) {
     const user = sdk.gun.user();
     // Use GunDB...
   }
-  
+
   // Access authentication
   if (sdk?.auth) {
     // Use auth methods...
   }
-  
+
   return <div>...</div>;
 };
 ```
@@ -180,4 +187,3 @@ MIT
 ---
 
 Built with ❤️ by the Shogun community
-
