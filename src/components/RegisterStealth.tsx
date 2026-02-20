@@ -57,6 +57,18 @@ export const RegisterStealth: React.FC = () => {
   const { isLoggedIn, core } = useShogun();
   const { currentNetwork } = useNetwork();
   const [stealthKeys, setStealthKeys] = useState<StealthKeys | null>(null);
+  const [userPub, setUserPub] = useState<string | null>(null);
+  const [ethAddress, setEthAddress] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isOnChain, setIsOnChain] = useState(false);
+  const [alias, setAlias] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [status, setStatus] = useState<{ type: string; msg: string } | null>(null);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [isRegisteringOnChain, setIsRegisteringOnChain] = useState(false);
+  const [copiedSpending, setCopiedSpending] = useState(false);
+  const [copiedViewing, setCopiedViewing] = useState(false);
+  const [copiedEth, setCopiedEth] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn || !core) return;
