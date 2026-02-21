@@ -20,6 +20,7 @@ import {
 } from "../lib/gunStealth";
 import { sendEthOnChain, getOnChainStealthKeys } from "../lib/stealthContract";
 import { useNetwork } from "../lib/NetworkContext";
+import { isValidEthAmount, isValidRecipient } from "../lib/validation";
 
 const StepHeader = ({
   n,
@@ -137,7 +138,10 @@ export const SendStealth: React.FC = () => {
 
   const lookupRecipient = async () => {
     const input = recipientPub.trim();
-    if (!input) return;
+    if (!isValidRecipient(input)) {
+      setStatus({ type: "error", msg: "Invalid Recipient: Must be a valid address or Shogun ID." });
+      return;
+    }
     setIsLookingUp(true);
     setStatus(null);
     setRecipientEntry(null);
@@ -228,6 +232,12 @@ export const SendStealth: React.FC = () => {
 
   const broadcastSignal = async (mode: "gun" | "chain") => {
     if (!stealthAddress || !ephemeralPubKey || !recipientEntry) return;
+
+    if (mode === "chain" && !isValidEthAmount(amount)) {
+      setStatus({ type: "error", msg: "Invalid Amount: Please enter a valid positive number." });
+      return;
+    }
+
     setIsPublishing(true);
     setStatus(null);
     try {
@@ -315,6 +325,12 @@ export const SendStealth: React.FC = () => {
 
   const handleFundIdentity = async () => {
     if (!senderEthAddress || !(window as any).ethereum) return;
+
+    if (!isValidEthAmount(amount)) {
+      setStatus({ type: "error", msg: "Invalid Amount: Please enter a valid positive number." });
+      return;
+    }
+
     setIsFunding(true);
     try {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
@@ -339,6 +355,12 @@ export const SendStealth: React.FC = () => {
       setStatus({ type: "error", msg: "MetaMask not detected." });
       return;
     }
+
+    if (!isValidEthAmount(amount)) {
+      setStatus({ type: "error", msg: "Invalid Amount: Please enter a valid positive number." });
+      return;
+    }
+
     try {
       setStatus({ type: "info", msg: "Initiating direct transfer..." });
       const provider = new ethers.BrowserProvider((window as any).ethereum);
