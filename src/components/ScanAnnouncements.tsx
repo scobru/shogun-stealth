@@ -278,323 +278,330 @@ export const ScanAnnouncements: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="card bg-base-200 p-6 text-center">
-        <p className="text-base-content/60">
-          🔐 Login required to scan for your stealth transactions.
+      <div className="bg-base-200 border-4 border-base-content p-12 rounded-[40px] text-center shadow-[24px_24px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]">
+        <p className="font-heading font-black text-xl uppercase tracking-tighter opacity-40">
+          🔐 Sequence Authorization Required
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+    <div className="space-y-12 pb-20">
+      {/* 1. Network Pulse Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         <button
-          className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all ${
+          className={`p-10 rounded-[40px] border-4 border-base-content flex flex-col items-center justify-center gap-4 transition-all hover:-translate-y-2 active:translate-y-0 ${
             isScanning
-              ? "bg-primary text-primary-content shadow-xl shadow-primary/20 animate-pulse"
-              : "surface-container hover:bg-base-300 hover:scale-[1.03] shadow-sm"
+              ? "bg-primary text-base-100 shadow-[12px_12px_0px_0px_rgba(var(--p-rgb,0,0,0),1)]"
+              : "bg-base-100 text-base-content shadow-[12px_12px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] hover:shadow-[20px_20px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
           }`}
           onClick={loadAndScan}
           disabled={isScanning || !stealthKeys}
         >
-          <span className="text-3xl">🔍</span>
-          <span className="text-xs font-bold font-heading uppercase tracking-[0.2em]">
-            {isScanning ? "Scanning..." : "Deep Scan"}
+          <span className="text-4xl">🔍</span>
+          <span className="font-heading font-black uppercase tracking-widest text-[10px]">
+            {isScanning ? "Deep Scanning..." : "Network Deep Scan"}
           </span>
         </button>
 
         <button
-          className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all ${
+          className={`p-10 rounded-[40px] border-4 border-base-content flex flex-col items-center justify-center gap-4 transition-all hover:-translate-y-2 active:translate-y-0 ${
             isSubscribed
-              ? "bg-success text-success-content shadow-xl shadow-success/20"
-              : "surface-container hover:bg-base-300 hover:scale-[1.03] shadow-sm"
+              ? "bg-success text-base-100 shadow-[12px_12px_0px_0px_rgba(var(--su-rgb,0,0,0),1)]"
+              : "bg-base-100 text-base-content shadow-[12px_12px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] hover:shadow-[20px_20px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
           }`}
           onClick={() => setIsSubscribed((v) => !v)}
         >
-          <span className="text-3xl">{isSubscribed ? "📡" : "🌑"}</span>
-          <span className="text-xs font-bold font-heading uppercase tracking-[0.2em]">
-            {isSubscribed ? "Live Sync" : "Go Live"}
+          <span className="text-4xl">{isSubscribed ? "📡" : "🌑"}</span>
+          <span className="font-heading font-black uppercase tracking-widest text-[10px]">
+            {isSubscribed ? "Protocol Online" : "Initialize Link"}
           </span>
         </button>
 
         <button
-          className={`p-8 rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all shadow-sm ${
+          className={`p-10 rounded-[40px] border-4 border-base-content flex flex-col items-center justify-center gap-4 transition-all hover:-translate-y-2 active:translate-y-0 ${
             isLoadingBalances
-              ? "bg-accent text-accent-content animate-pulse"
-              : "surface-container hover:bg-base-300 hover:scale-[1.03]"
-          } disabled:opacity-30`}
+              ? "bg-secondary text-base-100 shadow-[12px_12px_0px_0px_rgba(var(--s-rgb,0,0,0),1)] animate-pulse"
+              : "bg-base-100 text-base-content shadow-[12px_12px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] hover:shadow-[20px_20px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
+          } disabled:opacity-20`}
           onClick={() => loadBalances()}
           disabled={isLoadingBalances || ownedAddresses.length === 0}
         >
-          <span className="text-3xl">💰</span>
-          <span className="text-xs font-bold font-heading uppercase tracking-[0.2em]">
-            {isLoadingBalances ? "Checking..." : "Pulse Check"}
+          <span className="text-4xl">💰</span>
+          <span className="font-heading font-black uppercase tracking-widest text-[10px]">
+            {isLoadingBalances ? "Syncing..." : "Sync Balances"}
           </span>
         </button>
       </div>
 
-      {/* Stats Summary */}
-      <div className="flex gap-6">
-        <div className="flex-1 surface-container p-8 text-center bg-base-300/50">
-          <div className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em] mb-3">
-            Discovery Signals
-          </div>
-          <div className="text-4xl font-heading font-extrabold tracking-tighter">
-            {totalAnnouncements}
-          </div>
-        </div>
-        <div className="flex-1 surface-container p-8 text-center border-2 border-success/10">
-          <div className="text-[10px] font-bold text-success uppercase tracking-[0.2em] mb-3">
-            Controlled Cells
-          </div>
-          <div className="text-4xl font-heading font-extrabold text-success tracking-tighter">
-            {ownedAddresses.length}
-          </div>
-        </div>
-      </div>
-
-      {/* Status Alert */}
-      {status && (
-        <div className="surface-container !bg-base-200/40 p-5 text-xs font-bold font-heading uppercase tracking-widest text-center opacity-60 rounded-full">
-          {status}
-        </div>
-      )}
-
-      {/* Owned Addresses */}
+      {/* 2. Discovered Identity Nodes */}
       {ownedAddresses.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="text-xs font-bold font-heading opacity-30 uppercase tracking-[0.3em] ml-6 pt-4">
-            Authorized Ownership Nodes
-          </h3>
-          {ownedAddresses.map((entry) => (
-            <div
-              key={entry.id}
-              className="surface-container-high p-8 md:p-10 space-y-8 relative overflow-hidden group border border-success/5 shadow-xl shadow-black/5"
-            >
-              <div className="absolute top-0 right-0 w-48 h-48 bg-success/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none transition-all group-hover:bg-success/10"></div>
-
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-success">
-                    <span className="badge-dot bg-success animate-pulse shadow-[0_0_12px_hsl(var(--su))]" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest font-heading">
-                      Cell Linked & Verified
-                    </span>
-                  </div>
-                  <code className="text-2xl font-mono font-bold block break-all pt-2 leading-tight tracking-tight selection:bg-success selection:text-success-content">
-                    {entry.stealthAddress}
-                  </code>
-                </div>
-                <div className="text-left md:text-right shrink-0">
-                  {entry.balance !== undefined && (
-                    <div className="text-4xl font-heading font-extrabold text-success tracking-tighter">
-                      {entry.balance}{" "}
-                      <span className="text-lg opacity-40 font-bold ml-1">
-                        ETH
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-[10px] font-bold opacity-30 mt-2 uppercase tracking-[0.2em]">
-                    Detected {new Date(entry.timestamp).toLocaleDateString()}
-                    {entry.metadata &&
-                      entry.metadata.startsWith("0x") &&
-                      entry.metadata.length === 66 && (
-                        <span className="ml-2 text-primary">
-                          • On-Chain Pulse ⛓️
-                        </span>
-                      )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 flex-wrap pt-4">
-                {entry.metadata &&
-                  entry.metadata.startsWith("0x") &&
-                  entry.metadata.length === 66 && (
-                    <a
-                      href={`${currentNetwork.explorerUrl}/tx/${entry.metadata}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-primary/10 text-primary hover:bg-primary/20 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
-                    >
-                      View TX ↗
-                    </a>
-                  )}
-                <a
-                  href={`${currentNetwork.explorerUrl}/address/${entry.stealthAddress}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-base-300 hover:bg-base-100 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
-                >
-                  Exp ↗
-                </a>
-                <button
-                  className={`rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm ${
-                    revealedKeys.has(entry.id)
-                      ? "bg-error text-error-content"
-                      : "bg-primary/20 text-primary hover:bg-primary/30"
-                  }`}
-                  onClick={() => toggleRevealKey(entry.id)}
-                >
-                  {revealedKeys.has(entry.id) ? "Seal Key" : "Expose Key"}
-                </button>
-                <button
-                  className="bg-base-300 hover:bg-error/10 hover:text-error rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all"
-                  onClick={() => handleRemoveAnnouncement(entry.id)}
-                >
-                  Purge Signal
-                </button>
-                <button
-                  className="bg-base-300 hover:bg-base-100 rounded-full px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm"
-                  onClick={() =>
-                    navigator.clipboard.writeText(entry.stealthAddress)
-                  }
-                >
-                  Copy
-                </button>
-              </div>
-
-              {revealedKeys.has(entry.id) && (
-                <div className="bg-error/5 border border-error/10 rounded-[28px] p-8 mt-6">
-                  <div className="flex items-center gap-3 text-error mb-6">
-                    <span className="text-2xl">⚠️</span>
-                    <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] font-heading">
-                      Secret Access Sequence - DO NOT BROADCAST
-                    </span>
-                  </div>
-                  <code className="text-xs font-mono break-all block bg-base-300 p-6 rounded-2xl border border-white/5 leading-relaxed selection:bg-error selection:text-error-content shadow-inner">
-                    {entry.privateKey}
-                  </code>
-                  <button
-                    className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-error opacity-60 hover:opacity-100 transition-all hover:tracking-widest"
-                    onClick={() =>
-                      navigator.clipboard.writeText(entry.privateKey)
-                    }
-                  >
-                    Copy Spending Secret
-                  </button>
-                </div>
-              )}
-
-              {/* Sweep Panel */}
-              <div className="surface-container !bg-base-200/50 p-8 space-y-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-extrabold opacity-40 uppercase tracking-[0.2em] font-heading">
-                    Withdrawal Authorization
-                  </span>
-                  <span className="text-[10px] opacity-20 font-bold uppercase">
-                    {currentNetwork.name} Pulse
-                  </span>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <input
-                    type="text"
-                    className="input-material flex-1"
-                    placeholder="Vault destination 0x..."
-                    value={sweepState[entry.id]?.to ?? ""}
-                    onChange={(e) =>
-                      setSweepState((prev) => ({
-                        ...prev,
-                        [entry.id]: {
-                          ...prev[entry.id],
-                          to: e.target.value,
-                          sending: false,
-                        },
-                      }))
-                    }
-                  />
-                  <button
-                    className={`btn-primary-bloom !bg-success text-success-content px-10 h-[56px] shadow-lg shadow-success/10 ${
-                      sweepState[entry.id]?.sending ? "animate-pulse" : ""
-                    }`}
-                    disabled={sweepState[entry.id]?.sending}
-                    onClick={() => sweepFunds(entry)}
-                  >
-                    {sweepState[entry.id]?.sending ? "..." : "Sweep Pulse"}
-                  </button>
-                </div>
-
-                {sweepState[entry.id]?.error && (
-                  <div className="text-[10px] text-error font-extrabold text-center uppercase tracking-widest bg-error/10 p-4 rounded-full">
-                    Protocol Error: {sweepState[entry.id].error}
-                  </div>
-                )}
-
-                {sweepState[entry.id]?.txHash && (
-                  <div className="bg-success text-success-content rounded-3xl p-6 flex flex-col gap-2 items-center shadow-xl shadow-success/20 animate-in fade-in slide-in-from-bottom-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">
-                      Broadcast Complete
-                    </span>
-                    <a
-                      href={`${currentNetwork.explorerUrl}/tx/${sweepState[entry.id].txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-mono opacity-80 hover:opacity-100 truncate w-full text-center underline decoration-dotted underline-offset-4"
-                    >
-                      {sweepState[entry.id].txHash}
-                    </a>
-                  </div>
-                )}
-              </div>
+        <div className="space-y-12">
+          <div className="flex items-center justify-between px-4">
+            <div className="flex flex-col gap-1">
+              <label className="sharp-label !mb-0 text-xl">
+                Controlled Identity Nodes
+              </label>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                Matches found in the abyss
+              </p>
             </div>
-          ))}
+            <div className="bg-primary text-base-100 font-black px-6 py-2 rounded-full border-4 border-base-content text-sm shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]">
+              {ownedAddresses.length} NODES
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-10">
+            {ownedAddresses.map((entry) => (
+              <div
+                key={entry.id}
+                className="bg-base-100 border-4 border-base-content p-10 rounded-[40px] shadow-[32px_32px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] group relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none group-hover:bg-primary/10 transition-colors duration-500"></div>
+
+                <div className="relative z-10 space-y-10">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                    <div className="space-y-4 flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-success animate-pulse shadow-[0_0_12px_rgba(var(--su-rgb,0,0,0),1)]" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-success">
+                          MATCH VERIFIED & LINKED
+                        </span>
+                      </div>
+                      <code className="text-3xl font-black font-mono block break-all tracking-tighter leading-none selection:bg-primary selection:text-base-100">
+                        {entry.stealthAddress}
+                      </code>
+                    </div>
+
+                    <div className="text-left md:text-right min-w-[200px]">
+                      <label className="sharp-label !mb-0 opacity-40">
+                        Network Liquidity
+                      </label>
+                      <div className="text-6xl font-heading font-black tracking-tighter text-primary">
+                        {entry.balance ?? "0.0"}{" "}
+                        <span className="text-2xl opacity-40 font-black">
+                          ETH
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 border-t-4 border-base-content pt-10">
+                    {/* Access & Secrets */}
+                    <div className="space-y-6">
+                      <label className="sharp-label">Access Interface</label>
+                      <div className="flex flex-wrap gap-4">
+                        <button
+                          className={`sharp-button !py-4 flex items-center gap-2 transition-transform active:scale-95 ${
+                            revealedKeys.has(entry.id)
+                              ? "!bg-error !text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
+                              : "!bg-secondary !text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--s-rgb,0,0,0),1)]"
+                          }`}
+                          onClick={() => toggleRevealKey(entry.id)}
+                        >
+                          {revealedKeys.has(entry.id) ? (
+                            <>
+                              <span className="text-lg">🔒</span>
+                              <span>SEAL KEY</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-lg">🔑</span>
+                              <span>REVEAL SECRET</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
+                          onClick={() =>
+                            navigator.clipboard.writeText(entry.stealthAddress)
+                          }
+                        >
+                          <span>📋</span>
+                          <span>COPY ADDR</span>
+                        </button>
+                        <button
+                          className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
+                          onClick={() => handleRemoveAnnouncement(entry.id)}
+                        >
+                          <span>🗑️</span>
+                          <span>PURGE</span>
+                        </button>
+                      </div>
+
+                      {revealedKeys.has(entry.id) && (
+                        <div className="bg-error/5 border-4 border-error p-8 rounded-[32px] animate-in zoom-in-95 duration-200 shadow-[24px_24px_0px_0px_rgba(var(--er-rgb,0,0,0),0.15)] space-y-6">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-error">
+                              Spending Sequence (PK)
+                            </label>
+                            <span className="bg-error text-base-100 text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
+                              Active Exposure
+                            </span>
+                          </div>
+                          <div className="relative group/pk">
+                            <code className="block bg-base-100 p-8 rounded-[24px] border-4 border-error font-mono text-xs break-all font-black selection:bg-error selection:text-base-100 leading-relaxed">
+                              {entry.privateKey}
+                            </code>
+                            <button
+                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
+                              onClick={() =>
+                                navigator.clipboard.writeText(entry.privateKey)
+                              }
+                            >
+                              📋
+                            </button>
+                          </div>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
+                            🚨 SECURITY ADVISORY: THIS KEY GRANTS TOTAL CONTROL.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sweep Control */}
+                    <div className="space-y-6">
+                      <label className="sharp-label">Withdrawal Sequence</label>
+                      <div className="flex flex-col gap-6">
+                        <div className="relative group/input">
+                          <input
+                            type="text"
+                            className="sharp-input !text-xs !py-6 !bg-base-200 border-4 focus:!bg-base-100 transition-all"
+                            placeholder="Target Address 0x..."
+                            value={sweepState[entry.id]?.to ?? ""}
+                            onChange={(e) =>
+                              setSweepState((prev) => ({
+                                ...prev,
+                                [entry.id]: {
+                                  ...prev[entry.id],
+                                  to: e.target.value,
+                                  sending: false,
+                                },
+                              }))
+                            }
+                          />
+                          <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-20 uppercase tracking-widest pointer-events-none group-focus-within/input:opacity-0 transition-opacity">
+                            DESTINATION
+                          </span>
+                        </div>
+                        <button
+                          className="sharp-button !bg-success !text-base-100 !py-6 font-black uppercase text-sm tracking-[0.3em] shadow-[12px_12px_0px_0px_rgba(var(--su-rgb,0,0,0),0.3)] hover:shadow-[16px_16px_0px_0px_rgba(var(--su-rgb,0,0,0),1)] transition-all hover:-translate-y-1 active:translate-y-0 active:shadow-none"
+                          disabled={sweepState[entry.id]?.sending}
+                          onClick={() => sweepFunds(entry)}
+                        >
+                          {sweepState[entry.id]?.sending ? (
+                            <span className="flex items-center justify-center gap-3">
+                              <span className="loading loading-sm" />
+                              SIGNALING...
+                            </span>
+                          ) : (
+                            "⚡ EXECUTE SWEEP"
+                          )}
+                        </button>
+                      </div>
+
+                      {sweepState[entry.id]?.txHash && (
+                        <div className="bg-success text-base-100 border-4 border-base-content p-6 rounded-[24px] flex flex-col items-center gap-2 shadow-[12px_12px_0px_0px_rgba(var(--su-rgb,0,0,0),1)]">
+                          <span className="text-[10px] font-black uppercase tracking-widest">
+                            TRANSACTION BROADCAST
+                          </span>
+                          <a
+                            href={`${currentNetwork.explorerUrl}/tx/${sweepState[entry.id].txHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-[10px] underline decoration-dotted underline-offset-4 break-all text-center"
+                          >
+                            {sweepState[entry.id].txHash}
+                          </a>
+                        </div>
+                      )}
+
+                      {sweepState[entry.id]?.error && (
+                        <div className="bg-error text-base-100 border-4 border-base-content p-4 text-[10px] font-black uppercase tracking-widest text-center shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]">
+                          Error: {sweepState[entry.id].error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Raw Signals (Collapsible) */}
-      <details className="group surface-container !bg-transparent !border-base-content/5 overflow-hidden">
-        <summary className="p-8 cursor-pointer hover:bg-base-200 transition-all flex items-center justify-between text-xs font-bold font-heading opacity-30 uppercase tracking-[0.3em]">
-          Browse Protocol Traffic ({announcements.length})
-          <span className="group-open:rotate-180 transition-transform text-lg text-primary">
-            ↓
-          </span>
-        </summary>
-        <div className="p-8 pt-0 overflow-x-auto">
-          <table className="w-full text-left text-[11px] border-collapse font-medium">
-            <thead>
-              <tr className="border-b-2 border-base-content/5 text-primary/40 uppercase tracking-[0.2em] font-heading font-extrabold">
-                <th className="py-4 px-3">Target Node</th>
-                <th className="py-4 px-3">Tag</th>
-                <th className="py-4 px-3">Temporal Key</th>
-                <th className="py-4 px-3">Auth Status</th>
-              </tr>
-            </thead>
-            <tbody className="opacity-80">
-              {announcements.map((ann) => {
-                const isOwned = ownedAddresses.some((o) => o.id === ann.id);
-                return (
-                  <tr
-                    key={ann.id}
-                    className={`border-b border-base-content/5 hover:bg-base-200 transition-colors ${isOwned ? "bg-success/10 text-success font-bold" : "opacity-50"}`}
-                  >
-                    <td className="py-4 px-3 font-mono">
-                      {ann.stealthAddress.slice(0, 18)}...
-                    </td>
-                    <td className="py-4 px-3 font-mono">
-                      <span className="bg-base-300 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                        {ann.viewTag || "0x-"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3 font-mono">
-                      {ann.ephemeralPubKey.slice(0, 12)}...
-                    </td>
-                    <td className="py-4 px-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest ${isOwned ? "bg-success text-success-content" : "bg-base-300 opacity-40"}`}
-                      >
-                        {isOwned ? "Authorized" : "Unknown"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </details>
+      {/* 3. Global Pulse Registry */}
+      <div className="flex flex-col gap-6">
+        {status && (
+          <div className="bg-primary/5 border-4 border-base-content rounded-[32px] p-6 flex items-center justify-center gap-4 animate-in slide-in-from-top-4 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.05)]">
+            <span className="text-primary text-xl font-black">◈</span>
+            <p className="font-heading font-black uppercase tracking-[0.4em] text-[10px] text-base-content opacity-40">
+              {status}
+            </p>
+          </div>
+        )}
+
+        <details className="group bg-base-200 rounded-[40px] border-4 border-base-content shadow-[32px_32px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] overflow-hidden">
+          <summary className="p-12 cursor-pointer hover:bg-base-content hover:text-base-100 transition-all flex items-center justify-between text-[11px] font-black font-heading text-base-content/40 uppercase tracking-[0.6em]">
+            Protocol Traffic Explorer ({announcements.length} SIGNALS)
+            <span className="group-open:rotate-180 transition-transform text-3xl text-primary font-black">
+              ↓
+            </span>
+          </summary>
+          <div className="p-12 pt-0 overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b-4 border-base-content uppercase font-heading font-black text-[10px] tracking-[0.3em] opacity-40">
+                  <th className="py-8 px-4">Stealth Address</th>
+                  <th className="py-8 px-4">Tag</th>
+                  <th className="py-8 px-4">Stealth Key (E)</th>
+                  <th className="py-8 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {announcements.map((ann) => {
+                  const isOwned = ownedAddresses.some((o) => o.id === ann.id);
+                  return (
+                    <tr
+                      key={ann.id}
+                      className={`group/row border-b-2 border-base-content/5 hover:bg-base-100 transition-colors ${isOwned ? "bg-success/5" : ""}`}
+                    >
+                      <td className="py-8 px-4 font-mono text-sm font-black">
+                        {ann.stealthAddress.slice(0, 18)}...
+                      </td>
+                      <td className="py-8 px-4">
+                        <span className="bg-base-300 px-4 py-2 rounded-xl text-[10px] font-black border-2 border-base-content">
+                          {ann.viewTag || "0x-"}
+                        </span>
+                      </td>
+                      <td className="py-8 px-4 font-mono text-xs opacity-40">
+                        {ann.ephemeralPubKey.slice(0, 24)}...
+                      </td>
+                      <td className="py-8 px-4 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <span
+                            className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border-2 ${isOwned ? "bg-success text-base-100 border-base-content" : "bg-base-content/5 text-base-content/20 border-base-content/5"}`}
+                          >
+                            {isOwned ? "Authorized" : "Unknown"}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveAnnouncement(ann.id)}
+                            className="w-10 h-10 rounded-xl bg-error/10 text-error border-2 border-error/20 hover:bg-error hover:text-white transition-all flex items-center justify-center text-xs opacity-0 group-hover/row:opacity-100"
+                            title="Delete Signal"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
     </div>
   );
 };
