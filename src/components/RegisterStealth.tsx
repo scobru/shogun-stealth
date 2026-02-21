@@ -18,6 +18,7 @@ import {
   registerOnChainOnBehalf,
   getOnChainStealthKeys,
 } from "../lib/stealthContract";
+import { sanitizeAlias } from "../lib/validation";
 
 const CopyIcon = () => (
   <svg
@@ -424,7 +425,7 @@ export const RegisterStealth: React.FC = () => {
             className="input-material w-full !bg-base-200 border-2 border-transparent focus:border-primary/20 h-[56px]"
             placeholder="e.g. neuro.shogun"
             value={alias}
-            onChange={(e) => setAlias(e.target.value)}
+            onChange={(e) => setAlias(sanitizeAlias(e.target.value))}
           />
         </div>
 
