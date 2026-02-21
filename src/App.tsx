@@ -55,8 +55,8 @@ const MainApp: React.FC = () => {
               <span className="font-heading text-3xl font-bold tracking-tight text-primary">
                 Shogun Stealth
               </span>
-              <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em]">
-                Private Neural Transactions
+              <p className="text-[9px] font-bold text-base-content/40 uppercase tracking-[0.4em]">
+                Private Stealth Transactions
               </p>
             </div>
           </div>
@@ -99,6 +99,22 @@ const MainApp: React.FC = () => {
                 className="hover:text-primary transition-colors"
               >
                 Network
+              </a>
+              <a
+                href="https://sepolia.basescan.org/address/0x6038197D7eb76ee668b37c61021619542F757B63"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
+              >
+                Registry
+              </a>
+              <a
+                href="https://sepolia.basescan.org/address/0x512edE537cb53dcbFC29629B4999c3e8f18799Eb"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
+              >
+                Forwarder
               </a>
               <a
                 href="https://shogun-eco.xyz/"

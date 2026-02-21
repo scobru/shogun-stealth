@@ -63,12 +63,15 @@ export const RegisterStealth: React.FC = () => {
   const [isOnChain, setIsOnChain] = useState(false);
   const [alias, setAlias] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
-  const [status, setStatus] = useState<{ type: string; msg: string } | null>(null);
+  const [status, setStatus] = useState<{ type: string; msg: string } | null>(
+    null,
+  );
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [isRegisteringOnChain, setIsRegisteringOnChain] = useState(false);
   const [copiedSpending, setCopiedSpending] = useState(false);
   const [copiedViewing, setCopiedViewing] = useState(false);
   const [copiedEth, setCopiedEth] = useState(false);
+  const [revealedShogun, setRevealedShogun] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn || !core) return;
@@ -256,7 +259,7 @@ export const RegisterStealth: React.FC = () => {
       setIsOnChain(true);
       setStatus({
         type: "success",
-        msg: "✅ Stealth keys registered for Neural Identity on-chain!",
+        msg: "✅ Stealth keys registered for Shogun Identity on-chain!",
       });
     } catch (e: any) {
       console.error("Chain registration error:", e);
@@ -364,22 +367,47 @@ export const RegisterStealth: React.FC = () => {
       </div>
 
       {/* Ethereum Identity Address */}
-      <div className="bg-primary/5 rounded-[28px] p-8 border border-primary/10">
-        <label className="text-[10px] font-bold text-primary/60 uppercase tracking-[0.2em] block mb-4">
-          Neural Identity (Shogun ID)
+      <div className="bg-primary/5 rounded-[40px] p-10 border-4 border-base-content shadow-[32px_32px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)] relative">
+        <label className="sharp-label !text-primary">
+          Master Shogun Identity (ID)
         </label>
-        <div className="flex items-center gap-4">
-          <code className="flex-1 text-sm font-mono text-primary font-bold break-all leading-relaxed">
+        <div className="flex flex-col md:flex-row items-center gap-6 mt-6">
+          <code className="flex-1 text-2xl font-black font-mono text-primary break-all leading-none tracking-tighter selection:bg-primary selection:text-base-100">
             {ethAddress}
           </code>
-          <button
-            className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-all shrink-0"
-            onClick={() => copy(ethAddress, setCopiedEth)}
-          >
-            {copiedEth ? <CheckIcon /> : <CopyIcon />}
-          </button>
+          <div className="flex gap-3">
+            <button
+              className="w-14 h-14 rounded-2xl bg-primary/10 text-primary border-4 border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)]"
+              onClick={() => copy(ethAddress ?? "", setCopiedEth)}
+            >
+              {copiedEth ? <CheckIcon /> : <CopyIcon />}
+            </button>
+            <button
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedShogun ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
+              onClick={() => setRevealedShogun(!revealedShogun)}
+              title={revealedShogun ? "Seal Secret" : "Expose Secret"}
+            >
+              {revealedShogun ? "🔒" : "🔑"}
+            </button>
+          </div>
         </div>
-        <p className="text-[10px] text-primary/40 mt-4 leading-relaxed font-medium">
+
+        {revealedShogun && stealthKeys?.neuralPriv && (
+          <div className="mt-8 bg-error/5 border-4 border-error p-8 rounded-[32px] animate-in zoom-in-95 duration-200">
+            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-error mb-4 block">
+              Master Spending Secret (PK)
+            </label>
+            <code className="block bg-base-100 p-6 rounded-2xl border-4 border-base-content font-mono text-sm break-all font-black selection:bg-error selection:text-base-100">
+              {stealthKeys.neuralPriv}
+            </code>
+            <p className="text-[10px] font-bold text-error mt-4 uppercase tracking-widest opacity-60">
+              ⚠️ NEVER SHARE THIS SECRET. It grants full control over your
+              Shogun Identity.
+            </p>
+          </div>
+        )}
+
+        <p className="text-[10px] text-primary/40 mt-8 leading-relaxed font-medium uppercase tracking-widest">
           Derived from your Gun pair. Used as a unique identifier for relay
           communication across the Shogun Ecosystem.
         </p>
@@ -389,7 +417,7 @@ export const RegisterStealth: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-8 items-end pt-8">
         <div className="flex-1 space-y-3 w-full">
           <label className="text-[10px] font-bold opacity-40 tracking-[0.2em] uppercase ml-6">
-            Neural Alias
+            Shogun Alias
           </label>
           <input
             type="text"
