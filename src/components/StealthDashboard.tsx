@@ -3,15 +3,15 @@
  * A tab-based dashboard: Register | Send | Scan
  */
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useShogun } from "shogun-button-react";
 import { ShogunButton } from "shogun-button-react";
-import RegisterStealth from "./RegisterStealth";
-import SendStealth from "./SendStealth";
-import ScanAnnouncements from "./ScanAnnouncements";
 
-import { useNetwork } from "../lib/NetworkContext";
-import ManualVault from "./ManualVault";
+// Lazy load components to reduce initial bundle size
+const RegisterStealth = React.lazy(() => import("./RegisterStealth"));
+const SendStealth = React.lazy(() => import("./SendStealth"));
+const ScanAnnouncements = React.lazy(() => import("./ScanAnnouncements"));
+const ManualVault = React.lazy(() => import("./ManualVault"));
 
 type Tab = "register" | "send" | "scan" | "vault";
 
@@ -106,10 +106,18 @@ export const StealthDashboard: React.FC = () => {
           </div>
 
           <div className="transition-all duration-300">
-            {activeTab === "register" && <RegisterStealth />}
-            {activeTab === "send" && <SendStealth />}
-            {activeTab === "scan" && <ScanAnnouncements />}
-            {activeTab === "vault" && <ManualVault />}
+            <Suspense
+              fallback={
+                <div className="flex justify-center p-12">
+                  <span className="loading loading-lg text-primary"></span>
+                </div>
+              }
+            >
+              {activeTab === "register" && <RegisterStealth />}
+              {activeTab === "send" && <SendStealth />}
+              {activeTab === "scan" && <ScanAnnouncements />}
+              {activeTab === "vault" && <ManualVault />}
+            </Suspense>
           </div>
         </div>
       </div>
