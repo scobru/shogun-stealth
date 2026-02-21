@@ -57,6 +57,7 @@ export const SendStealth: React.FC = () => {
   const [stealthAddress, setStealthAddress] = useState("");
   const [ephemeralPubKey, setEphemeralPubKey] = useState("");
   const [viewTag, setViewTag] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
 
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -387,6 +388,7 @@ export const SendStealth: React.FC = () => {
             placeholder="Shogun ID or 0x address..."
             value={recipientPub}
             onChange={(e) => setRecipientPub(e.target.value)}
+            aria-label="Recipient Shogun ID or Address"
           />
           <button
             className={`sharp-button !bg-primary !text-base-100 px-12 h-[72px] font-black uppercase tracking-widest ${isLookingUp ? "animate-pulse" : ""}`}
@@ -490,9 +492,17 @@ export const SendStealth: React.FC = () => {
             </code>
             <button
               className="absolute top-10 right-10 w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center border-2 border-secondary/20 hover:bg-secondary hover:text-base-100 transition-all opacity-40 hover:opacity-100"
-              onClick={() => navigator.clipboard.writeText(stealthAddress)}
+              onClick={() => {
+                navigator.clipboard.writeText(stealthAddress)
+                  .then(() => {
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 2000);
+                  })
+                  .catch((e) => console.error(e));
+              }}
+              aria-label={isCopied ? "Copied!" : "Copy stealth address"}
             >
-              📋
+              {isCopied ? "✅" : "📋"}
             </button>
           </div>
         )}
@@ -606,6 +616,7 @@ export const SendStealth: React.FC = () => {
                   disabled={step < 3}
                   className="sharp-input !text-4xl font-black font-heading text-center !py-8 pr-12"
                   placeholder="0.01"
+                  aria-label="Amount in ETH"
                 />
                 <span className="absolute right-8 top-1/2 -translate-y-1/2 text-sm font-black opacity-20 uppercase tracking-widest">
                   ETH
