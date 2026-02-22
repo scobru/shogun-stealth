@@ -449,6 +449,7 @@ export const ScanAnnouncements: React.FC = () => {
                               onClick={() =>
                                 navigator.clipboard.writeText(entry.privateKey)
                               }
+                              aria-label="Copy private key"
                             >
                               📋
                             </button>
@@ -589,6 +590,7 @@ export const ScanAnnouncements: React.FC = () => {
                             onClick={() => handleRemoveAnnouncement(ann.id)}
                             className="w-10 h-10 rounded-xl bg-error/10 text-error border-2 border-error/20 hover:bg-error hover:text-white transition-all flex items-center justify-center text-xs opacity-0 group-hover/row:opacity-100"
                             title="Delete Signal"
+                            aria-label="Delete signal"
                           >
                             ✕
                           </button>

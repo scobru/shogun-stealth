@@ -621,6 +621,7 @@ export const SendStealth: React.FC = () => {
                       )
                     }
                     className="sharp-button !bg-base-300 !text-base-content p-4 border-4"
+                    aria-label="View address on block explorer"
                   >
                     🔎
                   </button>
