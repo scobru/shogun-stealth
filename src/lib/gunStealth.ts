@@ -7,7 +7,9 @@
  */
 
 import type { IGunInstance } from "gun";
+import { v4 as uuidv4 } from "uuid";
 import type { StealthAnnouncement, StealthKeys } from "./stealthCore";
+import { isValidStealthAnnouncement } from "./validation";
 
 const STEALTH_REGISTRY = "shogun/stealth/registry/v2"; // Bumped version for 2-key model
 const STEALTH_ANNOUNCEMENTS = "shogun/stealth/announcements/v2";
@@ -101,7 +103,8 @@ export async function publishAnnouncement(
     gun: IGunInstance<any>,
     announcement: Omit<StealthAnnouncement, "id" | "timestamp">
 ): Promise<string> {
-    const id = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    // Use UUID for stronger randomness than Math.random()
+    const id = uuidv4();
     const full: StealthAnnouncement = {
         ...announcement,
         id,
@@ -130,7 +133,8 @@ export function subscribeToAnnouncements(
         .get(STEALTH_ANNOUNCEMENTS)
         .map()
         .on((data: StealthAnnouncement | null) => {
-            if (data?.ephemeralPubKey && data?.stealthAddress) {
+            // Validate incoming data to prevent crashes or garbage processing
+            if (isValidStealthAnnouncement(data)) {
                 onAnnouncement(data);
             }
         });
@@ -154,7 +158,8 @@ export async function getAllAnnouncements(
             .get(STEALTH_ANNOUNCEMENTS)
             .map()
             .once((data: StealthAnnouncement | null) => {
-                if (data?.ephemeralPubKey && data?.stealthAddress) {
+                // Validate incoming data to prevent crashes or garbage processing
+                if (isValidStealthAnnouncement(data)) {
                     results.push(data);
                 }
             });
