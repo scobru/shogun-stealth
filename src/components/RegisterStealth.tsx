@@ -334,6 +334,7 @@ export const RegisterStealth: React.FC = () => {
             <button
               className="w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
               onClick={() => copy(stealthKeys.spending.pub, setCopiedSpending)}
+              aria-label="Copy spending public key"
             >
               {copiedSpending ? <CheckIcon /> : <CopyIcon />}
             </button>
@@ -356,6 +357,7 @@ export const RegisterStealth: React.FC = () => {
             <button
               className="w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
               onClick={() => copy(stealthKeys.viewing.pub, setCopiedViewing)}
+              aria-label="Copy viewing public key"
             >
               {copiedViewing ? <CheckIcon /> : <CopyIcon />}
             </button>
@@ -380,6 +382,7 @@ export const RegisterStealth: React.FC = () => {
             <button
               className="w-14 h-14 rounded-2xl bg-primary/10 text-primary border-4 border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)]"
               onClick={() => copy(ethAddress ?? "", setCopiedEth)}
+              aria-label="Copy Ethereum address"
             >
               {copiedEth ? <CheckIcon /> : <CopyIcon />}
             </button>
@@ -387,6 +390,7 @@ export const RegisterStealth: React.FC = () => {
               className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedShogun ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
               onClick={() => setRevealedShogun(!revealedShogun)}
               title={revealedShogun ? "Seal Secret" : "Expose Secret"}
+              aria-label={revealedShogun ? "Seal secret" : "Expose secret"}
             >
               {revealedShogun ? "🔒" : "🔑"}
             </button>
