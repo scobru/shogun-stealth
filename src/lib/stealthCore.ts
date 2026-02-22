@@ -180,18 +180,25 @@ export function openStealthAddress(
  */
 export function checkStealthAddress(
     ephemeralPubKey: string,
-    viewingPrivKey: string,
+    viewingKey: string | ethers.Wallet,
     spendingPrivKey: string,
     announcedAddress: string,
     viewTag?: string
 ): boolean {
+    const viewingWallet =
+        typeof viewingKey === "string" ? new ethers.Wallet(viewingKey) : viewingKey;
+    // If viewingKey is a string, we might need it later for openStealthAddress if we don't pass the wallet there?
+    // Actually openStealthAddress takes viewingPrivKey as string.
+    // So if viewingKey is a Wallet, we need its private key string for openStealthAddress.
+    const viewingPrivKey = viewingWallet.privateKey;
+
     const tryCheck = (pk: string) => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
             // 1. Optional fast tag check
             if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
-                const viewingWallet = new ethers.Wallet(viewingPrivKey);
+                // Use the pre-computed wallet/key pair
                 const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
                 const hTag = ethers.keccak256(ssTag);
                 const computedTag = hTag.slice(0, 6).toLowerCase();
@@ -242,11 +249,14 @@ export function scanAnnouncements(
 
     console.log(`[Stealth] Scanning ${announcements.length} announcements...`);
 
+    // Optimization: Create viewing wallet once to avoid re-deriving public key for every announcement
+    const viewingWallet = new ethers.Wallet(keys.viewing.priv);
+
     for (const ann of announcements) {
         if (
             checkStealthAddress(
                 ann.ephemeralPubKey,
-                keys.viewing.priv,
+                viewingWallet,
                 keys.spending.priv,
                 ann.stealthAddress,
                 ann.viewTag

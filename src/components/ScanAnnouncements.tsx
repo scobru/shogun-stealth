@@ -3,7 +3,7 @@
  * Scans Gun announcements to find stealth addresses the logged-in user controls.
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useShogun } from "shogun-button-react";
 import { ethers } from "ethers";
 import {
@@ -49,6 +49,11 @@ export const ScanAnnouncements: React.FC = () => {
   >({});
 
   const gun = core?.gun;
+
+  const ownedIds = useMemo(
+    () => new Set(ownedAddresses.map((o) => o.id)),
+    [ownedAddresses],
+  );
 
   // Load user pair and derive stealth keys
   useEffect(() => {
@@ -562,7 +567,7 @@ export const ScanAnnouncements: React.FC = () => {
               </thead>
               <tbody>
                 {announcements.map((ann) => {
-                  const isOwned = ownedAddresses.some((o) => o.id === ann.id);
+                  const isOwned = ownedIds.has(ann.id);
                   return (
                     <tr
                       key={ann.id}
