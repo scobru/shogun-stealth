@@ -1,5 +1,6 @@
 
 import { ethers } from "ethers";
+import type { StealthAnnouncement } from "./stealthCore";
 
 /**
  * Validates if the given string is a valid Ethereum amount (positive number).
@@ -63,4 +64,36 @@ export function sanitizeAlias(alias: string): string {
 
   // Limit length
   return sanitized.slice(0, 32);
+}
+
+/**
+ * Validates a stealth announcement object.
+ * @param data The data to validate.
+ * @returns True if valid StealthAnnouncement, false otherwise.
+ */
+export function isValidStealthAnnouncement(data: any): data is StealthAnnouncement {
+  if (!data || typeof data !== 'object') return false;
+
+  // 1. Check ID (string, non-empty)
+  if (typeof data.id !== 'string' || data.id.trim() === '') return false;
+
+  // 2. Validate ephemeralPubKey (hex string)
+  if (typeof data.ephemeralPubKey !== 'string') return false;
+  // Should match 0x hex format.
+  if (!/^0x[0-9a-fA-F]+$/.test(data.ephemeralPubKey)) return false;
+
+  // 3. Validate stealthAddress (valid ETH address)
+  if (typeof data.stealthAddress !== 'string' || !isValidEthAddress(data.stealthAddress)) return false;
+
+  // 4. Validate viewTag (hex string)
+  if (typeof data.viewTag !== 'string') return false;
+  if (!/^0x[0-9a-fA-F]+$/.test(data.viewTag)) return false;
+
+  // 5. Validate timestamp (number)
+  if (typeof data.timestamp !== 'number' || isNaN(data.timestamp)) return false;
+
+  // 6. Validate metadata (optional string)
+  if (data.metadata !== undefined && typeof data.metadata !== 'string') return false;
+
+  return true;
 }

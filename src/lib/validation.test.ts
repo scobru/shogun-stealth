@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { isValidEthAmount, isValidEthAddress, isValidRecipient, sanitizeAlias } from './validation';
+import { isValidEthAmount, isValidEthAddress, isValidRecipient, sanitizeAlias, isValidStealthAnnouncement } from './validation';
 
 describe('Validation Utils', () => {
   describe('isValidEthAmount', () => {
@@ -60,6 +60,52 @@ describe('Validation Utils', () => {
     it('should truncate long aliases', () => {
       const longAlias = 'a'.repeat(40);
       expect(sanitizeAlias(longAlias).length).toBe(32);
+    });
+  });
+
+  describe('isValidStealthAnnouncement', () => {
+    const validAnnouncement = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      ephemeralPubKey: '0x028d7500dd4c126d2d652928cb08d571dc4052f6f3630689b0d1e2e921316531d0',
+      stealthAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+      viewTag: '0x1234',
+      timestamp: 1678886400000
+    };
+
+    it('should return true for valid announcement', () => {
+      expect(isValidStealthAnnouncement(validAnnouncement)).toBe(true);
+    });
+
+    it('should return true for valid announcement with metadata', () => {
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, metadata: 'some-encrypted-data' })).toBe(true);
+    });
+
+    it('should return false for missing fields', () => {
+      const { id, ...missingId } = validAnnouncement;
+      expect(isValidStealthAnnouncement(missingId)).toBe(false);
+
+      const { ephemeralPubKey, ...missingKey } = validAnnouncement;
+      expect(isValidStealthAnnouncement(missingKey)).toBe(false);
+    });
+
+    it('should return false for invalid types', () => {
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, id: 123 })).toBe(false);
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, timestamp: 'now' })).toBe(false);
+    });
+
+    it('should return false for invalid hex strings', () => {
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, ephemeralPubKey: 'not-hex' })).toBe(false);
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, viewTag: 'not-hex' })).toBe(false);
+    });
+
+    it('should return false for invalid eth address', () => {
+      expect(isValidStealthAnnouncement({ ...validAnnouncement, stealthAddress: '0xInvalid' })).toBe(false);
+    });
+
+    it('should return false for non-object', () => {
+        expect(isValidStealthAnnouncement(null)).toBe(false);
+        expect(isValidStealthAnnouncement(undefined)).toBe(false);
+        expect(isValidStealthAnnouncement("string")).toBe(false);
     });
   });
 });
