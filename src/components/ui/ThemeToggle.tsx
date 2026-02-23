@@ -32,7 +32,13 @@ export const ThemeToggle: React.FC = () => {
 
   return (
     <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="btn btn-circle">
+      <div
+        tabIndex={0}
+        role="button"
+        className="btn btn-circle tooltip tooltip-bottom"
+        aria-label="Change theme"
+        data-tip="Change theme"
+      >
         <span className="inline-flex items-center gap-1">
           <span
             className="inline-block w-2 h-2 rounded-full"
