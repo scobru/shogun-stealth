@@ -44,6 +44,19 @@ describe('Validation Utils', () => {
       expect(isValidRecipient('abc')).toBe(false);
       expect(isValidRecipient('')).toBe(false);
     });
+
+    it('should reject dangerous strings', () => {
+      expect(isValidRecipient('user<script>')).toBe(false);
+      expect(isValidRecipient('user;DROP TABLE')).toBe(false);
+      expect(isValidRecipient('user" OR 1=1')).toBe(false);
+    });
+
+    it('should accept Gun public keys and aliases', () => {
+      // Base64 string example
+      expect(isValidRecipient('valid+key/with=base64')).toBe(true);
+      expect(isValidRecipient('~valid.user.key')).toBe(true);
+      expect(isValidRecipient('user-name_123')).toBe(true);
+    });
   });
 
   describe('sanitizeAlias', () => {

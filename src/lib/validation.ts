@@ -46,7 +46,11 @@ export function isValidRecipient(recipient: string): boolean {
 
   // Basic check for Gun public key or alias.
   // We'll enforce a minimum length to avoid garbage, but allow aliases (e.g. "user").
-  return trimmed.length > 3;
+  // Security Enhancement: prevent XSS/injection by allowing only safe characters.
+  // Allowed: Alphanumeric, ., _, -, ~, +, /, =
+  if (trimmed.length <= 3) return false;
+
+  return /^[a-zA-Z0-9._~+/=-]+$/.test(trimmed);
 }
 
 /**
