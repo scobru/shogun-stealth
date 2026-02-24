@@ -11,12 +11,12 @@ import {
   generateStealthAddress,
   deriveStealthKeysFromGun,
   gunPairToEthAddress,
+  type StealthRegistryEntry,
 } from "../lib/stealthCore";
 import {
   getStealthKeys,
   getAllRegistered,
   publishAnnouncement,
-  type StealthRegistryEntry,
 } from "../lib/gunStealth";
 import { sendEthOnChain, getOnChainStealthKeys } from "../lib/stealthContract";
 import { useNetwork } from "../lib/NetworkContext";

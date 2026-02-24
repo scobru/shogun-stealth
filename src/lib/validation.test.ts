@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { isValidEthAmount, isValidEthAddress, isValidRecipient, sanitizeAlias, isValidStealthAnnouncement } from './validation';
+import { isValidEthAmount, isValidEthAddress, isValidRecipient, sanitizeAlias, isValidStealthAnnouncement, isValidStealthRegistryEntry } from './validation';
 
 describe('Validation Utils', () => {
   describe('isValidEthAmount', () => {
@@ -119,6 +119,56 @@ describe('Validation Utils', () => {
         expect(isValidStealthAnnouncement(null)).toBe(false);
         expect(isValidStealthAnnouncement(undefined)).toBe(false);
         expect(isValidStealthAnnouncement("string")).toBe(false);
+    });
+  });
+
+  describe('isValidStealthRegistryEntry', () => {
+    const validEntry = {
+      spendingPubKey: '0x028d7500dd4c126d2d652928cb08d571dc4052f6f3630689b0d1e2e921316531d0',
+      viewingPubKey: '0x038d7500dd4c126d2d652928cb08d571dc4052f6f3630689b0d1e2e921316531d0',
+      pub: 'valid.gun.key.123',
+      alias: 'valid.alias',
+      updatedAt: 1678886400000
+    };
+
+    it('should return true for valid entry', () => {
+      expect(isValidStealthRegistryEntry(validEntry)).toBe(true);
+    });
+
+    it('should return true for valid entry without alias', () => {
+        const { alias, ...noAlias } = validEntry;
+        expect(isValidStealthRegistryEntry(noAlias)).toBe(true);
+    });
+
+    it('should return true for valid entry with empty alias', () => {
+        expect(isValidStealthRegistryEntry({...validEntry, alias: ''})).toBe(true);
+    });
+
+    it('should return false for missing fields', () => {
+      const { spendingPubKey, ...missingS } = validEntry;
+      expect(isValidStealthRegistryEntry(missingS)).toBe(false);
+
+      const { pub, ...missingP } = validEntry;
+      expect(isValidStealthRegistryEntry(missingP)).toBe(false);
+    });
+
+    it('should return false for invalid hex strings', () => {
+      expect(isValidStealthRegistryEntry({ ...validEntry, spendingPubKey: 'invalid' })).toBe(false);
+      expect(isValidStealthRegistryEntry({ ...validEntry, viewingPubKey: 'invalid' })).toBe(false);
+    });
+
+    it('should return false for invalid alias', () => {
+      expect(isValidStealthRegistryEntry({ ...validEntry, alias: 'alias<script>' })).toBe(false);
+      expect(isValidStealthRegistryEntry({ ...validEntry, alias: 'a'.repeat(33) })).toBe(false);
+    });
+
+    it('should return false for invalid pub', () => {
+      expect(isValidStealthRegistryEntry({ ...validEntry, pub: 'sh' })).toBe(false); // too short
+      expect(isValidStealthRegistryEntry({ ...validEntry, pub: 'bad<key>' })).toBe(false);
+    });
+
+    it('should return false for invalid updatedAt', () => {
+        expect(isValidStealthRegistryEntry({ ...validEntry, updatedAt: 'now' })).toBe(false);
     });
   });
 });

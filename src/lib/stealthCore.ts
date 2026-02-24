@@ -76,6 +76,14 @@ export interface StealthAnnouncement {
     timestamp: number;
 }
 
+export interface StealthRegistryEntry {
+    spendingPubKey: string; // S
+    viewingPubKey: string;  // V
+    pub: string;            // GunDB user public key
+    alias?: string;         // Optional human-readable alias
+    updatedAt: number;
+}
+
 /**
  * Derive stealth keys from Gun SEA identity using SHIP-03 salts.
  */
