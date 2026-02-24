@@ -12,6 +12,7 @@ const ManualVault: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [destination, setDestination] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (privateKey.length === 66 || privateKey.length === 64) {
@@ -90,14 +91,28 @@ const ManualVault: React.FC = () => {
     <div className="space-y-12">
       <div className="bg-base-100 border-4 border-base-content p-10 rounded-[40px] shadow-[32px_32px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]">
         <div className="mb-10">
-          <label className="sharp-label">Master Private Key Access</label>
-          <input
-            type="password"
-            className="sharp-input w-full text-lg font-mono focus:ring-4 focus:ring-primary/20"
-            placeholder="0x..."
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-          />
+          <label className="sharp-label" htmlFor="privateKey">
+            Master Private Key Access
+          </label>
+          <div className="relative">
+            <input
+              id="privateKey"
+              type={isVisible ? "text" : "password"}
+              className="sharp-input w-full text-lg font-mono focus:ring-4 focus:ring-primary/20 pr-16"
+              placeholder="0x..."
+              value={privateKey}
+              onChange={(e) => setPrivateKey(e.target.value)}
+              aria-label="Private Key"
+            />
+            <button
+              type="button"
+              onClick={() => setIsVisible(!isVisible)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl opacity-50 hover:opacity-100 transition-opacity"
+              aria-label={isVisible ? "Hide private key" : "Show private key"}
+            >
+              {isVisible ? "🙈" : "👁️"}
+            </button>
+          </div>
           <p className="text-[10px] font-black uppercase tracking-widest text-error mt-4 opacity-60">
             ⚠️ WARNING: Your private key is required to authorize withdrawals.
             It never leaves your browser.

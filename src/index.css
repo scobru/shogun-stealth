@@ -170,3 +170,16 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--bc) / 0.2);
 }
+
+/* Missing Sharp Components */
+.sharp-input {
+  @apply w-full bg-base-100 border-4 border-base-content p-4 text-base font-bold font-mono text-base-content outline-none transition-all placeholder:text-base-content/40 focus:ring-4 focus:ring-primary/20 rounded-2xl;
+}
+
+.sharp-button {
+  @apply bg-base-100 text-base-content border-4 border-base-content p-4 font-bold font-heading uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] rounded-full;
+}
+
+.sharp-label {
+  @apply block text-xs font-black font-heading uppercase tracking-widest mb-2 opacity-60;
+}
