@@ -12,6 +12,7 @@ import {
   type StealthKeys,
   deriveStealthKeysFromGun,
 } from "../lib/stealthCore";
+import AnnouncementRow from "./AnnouncementRow";
 import { useNetwork } from "../lib/NetworkContext";
 import {
   subscribeToAnnouncements,
@@ -184,17 +185,20 @@ export const ScanAnnouncements: React.FC = () => {
     });
   };
 
-  const handleRemoveAnnouncement = async (annId: string) => {
-    if (!gun) return;
-    try {
-      await deleteAnnouncement(gun, annId);
-      setOwnedAddresses((prev) => prev.filter((o) => o.id !== annId));
-      setAnnouncements((prev) => prev.filter((a) => a.id !== annId));
-      setStatus("✨ Signal deleted from GunDB");
-    } catch (e: any) {
-      setStatus(`Error deleting signal: ${e.message}`);
-    }
-  };
+  const handleRemoveAnnouncement = useCallback(
+    async (annId: string) => {
+      if (!gun) return;
+      try {
+        await deleteAnnouncement(gun, annId);
+        setOwnedAddresses((prev) => prev.filter((o) => o.id !== annId));
+        setAnnouncements((prev) => prev.filter((a) => a.id !== annId));
+        setStatus("✨ Signal deleted from GunDB");
+      } catch (e: any) {
+        setStatus(`Error deleting signal: ${e.message}`);
+      }
+    },
+    [gun],
+  );
 
   /** Sweep all ETH from stealth address → destination on Sepolia */
   const sweepFunds = async (entry: OwnedAnnouncement) => {
@@ -566,44 +570,14 @@ export const ScanAnnouncements: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {announcements.map((ann) => {
-                  const isOwned = ownedIds.has(ann.id);
-                  return (
-                    <tr
-                      key={ann.id}
-                      className={`group/row border-b-2 border-base-content/5 hover:bg-base-100 transition-colors ${isOwned ? "bg-success/5" : ""}`}
-                    >
-                      <td className="py-8 px-4 font-mono text-sm font-black">
-                        {ann.stealthAddress.slice(0, 18)}...
-                      </td>
-                      <td className="py-8 px-4">
-                        <span className="bg-base-300 px-4 py-2 rounded-xl text-[10px] font-black border-2 border-base-content">
-                          {ann.viewTag || "0x-"}
-                        </span>
-                      </td>
-                      <td className="py-8 px-4 font-mono text-xs opacity-40">
-                        {ann.ephemeralPubKey.slice(0, 24)}...
-                      </td>
-                      <td className="py-8 px-4 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <span
-                            className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border-2 ${isOwned ? "bg-success text-base-100 border-base-content" : "bg-base-content/5 text-base-content/20 border-base-content/5"}`}
-                          >
-                            {isOwned ? "Authorized" : "Unknown"}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveAnnouncement(ann.id)}
-                            className="w-10 h-10 rounded-xl bg-error/10 text-error border-2 border-error/20 hover:bg-error hover:text-white transition-all flex items-center justify-center text-xs opacity-0 group-hover/row:opacity-100"
-                            title="Delete Signal"
-                            aria-label="Delete signal"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {announcements.map((ann) => (
+                  <AnnouncementRow
+                    key={ann.id}
+                    ann={ann}
+                    isOwned={ownedIds.has(ann.id)}
+                    onRemove={handleRemoveAnnouncement}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
