@@ -8,19 +8,11 @@
 
 import type { IGunInstance } from "gun";
 import { v4 as uuidv4 } from "uuid";
-import type { StealthAnnouncement, StealthKeys } from "./stealthCore";
-import { isValidStealthAnnouncement } from "./validation";
+import type { StealthAnnouncement, StealthKeys, StealthRegistryEntry } from "./stealthCore";
+import { isValidStealthAnnouncement, isValidStealthRegistryEntry } from "./validation";
 
 const STEALTH_REGISTRY = "shogun/stealth/registry/v2"; // Bumped version for 2-key model
 const STEALTH_ANNOUNCEMENTS = "shogun/stealth/announcements/v2";
-
-export interface StealthRegistryEntry {
-    spendingPubKey: string; // S
-    viewingPubKey: string;  // V
-    pub: string;            // GunDB user public key
-    alias?: string;         // Optional human-readable alias
-    updatedAt: number;
-}
 
 /**
  * Publish your dual stealth public keys to the public Gun registry.
@@ -65,7 +57,12 @@ export async function getStealthKeys(
             .get(targetPub)
             .once((data: StealthRegistryEntry | null) => {
                 clearTimeout(timeout);
-                resolve(data || null);
+                // Validate data structure and content
+                if (data && isValidStealthRegistryEntry(data)) {
+                    resolve(data);
+                } else {
+                    resolve(null);
+                }
             });
     });
 }
@@ -84,7 +81,8 @@ export async function getAllRegistered(
             .get(STEALTH_REGISTRY)
             .map()
             .once((data: StealthRegistryEntry | null) => {
-                if (data?.spendingPubKey && data?.viewingPubKey) {
+                // Validate data before adding to results
+                if (isValidStealthRegistryEntry(data)) {
                     results.push(data);
                 }
             });

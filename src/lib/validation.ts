@@ -1,6 +1,6 @@
 
 import { ethers } from "ethers";
-import type { StealthAnnouncement } from "./stealthCore";
+import type { StealthAnnouncement, StealthRegistryEntry } from "./stealthCore";
 
 /**
  * Validates if the given string is a valid Ethereum amount (positive number).
@@ -100,4 +100,44 @@ export function isValidStealthAnnouncement(data: any): data is StealthAnnounceme
   if (data.metadata !== undefined && typeof data.metadata !== 'string') return false;
 
   return true;
+}
+
+/**
+ * Validates a stealth registry entry object.
+ * Ensures that keys are valid hex strings and alias is sanitized.
+ * @param data The data to validate.
+ * @returns True if valid StealthRegistryEntry, false otherwise.
+ */
+export function isValidStealthRegistryEntry(data: any): data is StealthRegistryEntry {
+    if (!data || typeof data !== 'object') return false;
+
+    // 1. Validate spendingPubKey (hex string)
+    if (typeof data.spendingPubKey !== 'string') return false;
+    // Should match 0x hex format (compressed 33 bytes = 66 hex chars + 0x = 68 chars, or 66 chars).
+    // Or uncompressed.
+    // For now, just ensure it's a hex string starting with 0x.
+    if (!/^0x[0-9a-fA-F]+$/.test(data.spendingPubKey)) return false;
+
+    // 2. Validate viewingPubKey (hex string)
+    if (typeof data.viewingPubKey !== 'string') return false;
+    if (!/^0x[0-9a-fA-F]+$/.test(data.viewingPubKey)) return false;
+
+    // 3. Validate pub (Gun user public key)
+    if (typeof data.pub !== 'string') return false;
+    // Use existing recipient validation which handles Gun keys
+    if (!isValidRecipient(data.pub)) return false;
+
+    // 4. Validate alias (optional string)
+    if (data.alias !== undefined) {
+        if (typeof data.alias !== 'string') return false;
+        // Check if alias contains only safe characters and length limit
+        // We enforce strict alias rules here to prevent injection.
+        if (data.alias.length > 32) return false;
+        if (!/^[a-zA-Z0-9._-]+$/.test(data.alias) && data.alias !== "") return false;
+    }
+
+    // 5. Validate updatedAt (number)
+    if (typeof data.updatedAt !== 'number' || isNaN(data.updatedAt)) return false;
+
+    return true;
 }
