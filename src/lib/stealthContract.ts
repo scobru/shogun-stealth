@@ -144,7 +144,14 @@ export async function fetchOnChainAnnouncements(
 
     // 1. Fetch from StealthKeyRegistry (Generic Metadata)
     const metaFilter = registry.filters.StealthMetadataRegistered();
-    const metaLogs = await registry.queryFilter(metaFilter, fromBlock);
+    // 2. Fetch from PaymentForwarder (Payment Announcements)
+    const payFilter = forwarder.filters.Announcement();
+
+    // Parallel fetch
+    const [metaLogs, payLogs] = await Promise.all([
+        registry.queryFilter(metaFilter, fromBlock),
+        forwarder.queryFilter(payFilter, fromBlock),
+    ]);
 
     for (const log of metaLogs) {
         const [stealthAddress, _sender, ephemeralPubKey, viewTag, recipientPubKey] = (log as any).args;
@@ -157,10 +164,6 @@ export async function fetchOnChainAnnouncements(
             timestamp: 0,
         });
     }
-
-    // 2. Fetch from PaymentForwarder (Payment Announcements)
-    const payFilter = forwarder.filters.Announcement();
-    const payLogs = await forwarder.queryFilter(payFilter, fromBlock);
 
     for (const log of payLogs) {
         const [receiver, _amount, _token, pkx, ciphertext] = (log as any).args;
