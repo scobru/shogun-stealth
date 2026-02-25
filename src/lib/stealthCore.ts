@@ -246,11 +246,12 @@ export function checkStealthAddress(
 
 /**
  * Scan a list of announcements to find the ones the receiver controls.
+ * Async to prevent blocking main thread.
  */
-export function scanAnnouncements(
+export async function scanAnnouncements(
     announcements: StealthAnnouncement[],
     keys: StealthKeys
-): Array<StealthAnnouncement & { wallet: ethers.Wallet; privateKey: string }> {
+): Promise<Array<StealthAnnouncement & { wallet: ethers.Wallet; privateKey: string }>> {
     const owned: Array<
         StealthAnnouncement & { wallet: ethers.Wallet; privateKey: string }
     > = [];
@@ -259,8 +260,10 @@ export function scanAnnouncements(
 
     // Optimization: Create viewing wallet once to avoid re-deriving public key for every announcement
     const viewingWallet = new ethers.Wallet(keys.viewing.priv);
+    const chunkSize = 20;
 
-    for (const ann of announcements) {
+    for (let i = 0; i < announcements.length; i++) {
+        const ann = announcements[i];
         const wallet = checkStealthAddress(
             ann.ephemeralPubKey,
             viewingWallet,
@@ -270,6 +273,11 @@ export function scanAnnouncements(
         );
         if (wallet) {
             owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
+        }
+
+        // Yield every chunk
+        if (i % chunkSize === 0 && i > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
         }
     }
 
