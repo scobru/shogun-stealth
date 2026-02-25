@@ -332,7 +332,8 @@ export const RegisterStealth: React.FC = () => {
               {stealthKeys.spending.pub}
             </code>
             <button
-              className="w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
+              className="tooltip w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
+              data-tip={copiedSpending ? "Copied!" : "Copy Spending Key"}
               onClick={() => copy(stealthKeys.spending.pub, setCopiedSpending)}
               aria-label="Copy spending public key"
             >
@@ -355,7 +356,8 @@ export const RegisterStealth: React.FC = () => {
               {stealthKeys.viewing.pub}
             </code>
             <button
-              className="w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
+              className="tooltip w-12 h-12 rounded-full bg-base-300 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-all shrink-0"
+              data-tip={copiedViewing ? "Copied!" : "Copy Viewing Key"}
               onClick={() => copy(stealthKeys.viewing.pub, setCopiedViewing)}
               aria-label="Copy viewing public key"
             >
@@ -380,16 +382,17 @@ export const RegisterStealth: React.FC = () => {
           </code>
           <div className="flex gap-3">
             <button
-              className="w-14 h-14 rounded-2xl bg-primary/10 text-primary border-4 border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)]"
+              className="tooltip tooltip-bottom w-14 h-14 rounded-2xl bg-primary/10 text-primary border-4 border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)]"
+              data-tip={copiedEth ? "Copied!" : "Copy Address"}
               onClick={() => copy(ethAddress ?? "", setCopiedEth)}
               aria-label="Copy Ethereum address"
             >
               {copiedEth ? <CheckIcon /> : <CopyIcon />}
             </button>
             <button
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedShogun ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
+              className={`tooltip tooltip-bottom w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedShogun ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
+              data-tip={revealedShogun ? "Hide Secret" : "Reveal Secret"}
               onClick={() => setRevealedShogun(!revealedShogun)}
-              title={revealedShogun ? "Seal Secret" : "Expose Secret"}
               aria-label={revealedShogun ? "Seal secret" : "Expose secret"}
             >
               {revealedShogun ? "🔒" : "🔑"}
@@ -421,10 +424,14 @@ export const RegisterStealth: React.FC = () => {
       {/* Alias & Action */}
       <div className="flex flex-col md:flex-row gap-8 items-end pt-8">
         <div className="flex-1 space-y-3 w-full">
-          <label className="text-[10px] font-bold opacity-40 tracking-[0.2em] uppercase ml-6">
+          <label
+            htmlFor="shogun-alias"
+            className="text-[10px] font-bold opacity-40 tracking-[0.2em] uppercase ml-6"
+          >
             Shogun Alias
           </label>
           <input
+            id="shogun-alias"
             type="text"
             className="input-material w-full !bg-base-200 border-2 border-transparent focus:border-primary/20 h-[56px]"
             placeholder="e.g. neuro.shogun"
