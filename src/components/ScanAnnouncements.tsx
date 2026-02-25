@@ -103,26 +103,24 @@ export const ScanAnnouncements: React.FC = () => {
     setIsScanning(true);
     setStatus("Syncing network signals (Gun + Base)...");
     try {
-      // 1. Fetch from GunDB
-      const gunAnnouncements = await getAllAnnouncements(gun);
-
-      // 2. Fetch from Chain
-      let chainAnnouncements: StealthAnnouncement[] = [];
+      // Parallel Fetch: Fetch from GunDB and Chain simultaneously
       const provider =
         (core as any)?.signer?.provider ||
         new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
 
-      if (provider) {
-        try {
-          chainAnnouncements = await fetchOnChainAnnouncements(
-            currentNetwork.registryAddress,
-            currentNetwork.forwarderAddress,
-            provider,
-          );
-        } catch (e) {
-          console.warn("Chain fetch failed:", e);
-        }
-      }
+      const [gunAnnouncements, chainAnnouncements] = await Promise.all([
+        getAllAnnouncements(gun),
+        provider
+          ? fetchOnChainAnnouncements(
+              currentNetwork.registryAddress,
+              currentNetwork.forwarderAddress,
+              provider,
+            ).catch((e) => {
+              console.warn("Chain fetch failed:", e);
+              return [] as StealthAnnouncement[];
+            })
+          : Promise.resolve([] as StealthAnnouncement[]),
+      ]);
 
       const all = [...gunAnnouncements, ...chainAnnouncements];
 
@@ -130,7 +128,7 @@ export const ScanAnnouncements: React.FC = () => {
       setAnnouncements(all);
       setStatus(`Scanning ${all.length} total signals...`);
 
-      const owned = scanAnnouncements(all, stealthKeys);
+      const owned = await scanAnnouncements(all, stealthKeys);
       setOwnedAddresses(owned);
 
       if (owned.length > 0) {
