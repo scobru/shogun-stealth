@@ -31,6 +31,30 @@ export function isValidEthAddress(address: string): boolean {
 }
 
 /**
+ * Validates if a string is a valid SECP256k1 public key (hex format).
+ * Accepts compressed (33 bytes) or uncompressed (65 bytes) keys.
+ * Also accepts raw X coordinates (32 bytes) used in some stealth announcements.
+ * @param key The public key string to validate.
+ * @returns True if valid, false otherwise.
+ */
+export function isValidPublicKey(key: string): boolean {
+    if (!key || typeof key !== 'string') return false;
+
+    // Must start with 0x
+    if (!key.startsWith('0x')) return false;
+
+    // Check hex characters
+    if (!/^0x[0-9a-fA-F]+$/.test(key)) return false;
+
+    // Length check (including 0x prefix):
+    // 32 bytes (raw X)     = 66 chars
+    // 33 bytes (compressed) = 68 chars
+    // 65 bytes (uncompressed) = 132 chars
+    const length = key.length;
+    return length === 66 || length === 68 || length === 132;
+}
+
+/**
  * Validates if the recipient string is valid (either an ETH address or a Gun public key).
  * Gun public keys are generally base64 strings, but for now we just check it's not empty
  * and has a reasonable length.
@@ -83,8 +107,8 @@ export function isValidStealthAnnouncement(data: any): data is StealthAnnounceme
 
   // 2. Validate ephemeralPubKey (hex string)
   if (typeof data.ephemeralPubKey !== 'string') return false;
-  // Should match 0x hex format.
-  if (!/^0x[0-9a-fA-F]+$/.test(data.ephemeralPubKey)) return false;
+  // Use stricter validation
+  if (!isValidPublicKey(data.ephemeralPubKey)) return false;
 
   // 3. Validate stealthAddress (valid ETH address)
   if (typeof data.stealthAddress !== 'string' || !isValidEthAddress(data.stealthAddress)) return false;
@@ -97,7 +121,12 @@ export function isValidStealthAnnouncement(data: any): data is StealthAnnounceme
   if (typeof data.timestamp !== 'number' || isNaN(data.timestamp)) return false;
 
   // 6. Validate metadata (optional string)
-  if (data.metadata !== undefined && typeof data.metadata !== 'string') return false;
+  if (data.metadata !== undefined) {
+      if (typeof data.metadata !== 'string') return false;
+      // Security Enhancement: Limit metadata length to prevent DoS/memory issues
+      // 4KB limit
+      if (data.metadata.length > 4096) return false;
+  }
 
   return true;
 }
@@ -113,14 +142,13 @@ export function isValidStealthRegistryEntry(data: any): data is StealthRegistryE
 
     // 1. Validate spendingPubKey (hex string)
     if (typeof data.spendingPubKey !== 'string') return false;
-    // Should match 0x hex format (compressed 33 bytes = 66 hex chars + 0x = 68 chars, or 66 chars).
-    // Or uncompressed.
-    // For now, just ensure it's a hex string starting with 0x.
-    if (!/^0x[0-9a-fA-F]+$/.test(data.spendingPubKey)) return false;
+    // Use stricter validation
+    if (!isValidPublicKey(data.spendingPubKey)) return false;
 
     // 2. Validate viewingPubKey (hex string)
     if (typeof data.viewingPubKey !== 'string') return false;
-    if (!/^0x[0-9a-fA-F]+$/.test(data.viewingPubKey)) return false;
+    // Use stricter validation
+    if (!isValidPublicKey(data.viewingPubKey)) return false;
 
     // 3. Validate pub (Gun user public key)
     if (typeof data.pub !== 'string') return false;
