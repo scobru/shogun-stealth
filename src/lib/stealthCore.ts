@@ -238,6 +238,53 @@ export function checkStealthAddress(
     if (pk.length === 66) {
         return tryCheck("0x" + pk);
     } else if (pk.length === 64) {
+        // Optimization: if viewTag is present, we can check both parities with only 1 EC multiplication
+        // The shared secret for 0x03 is just the negation of the Y coordinate of the shared secret for 0x02
+        if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+            const pk02 = "0x02" + pk;
+            const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+
+            try {
+                // 1. Compute Shared Secret for 0x02 (Expensive EC Mult)
+                const ss1 = viewingWallet.signingKey.computeSharedSecret(pk02);
+                const hTag1 = ethers.keccak256(ss1);
+                const computedTag1 = hTag1.slice(0, 6).toLowerCase();
+
+                if (computedTag1 === normalizedTag) {
+                    return tryCheck(pk02);
+                }
+
+                // 2. Compute Shared Secret for 0x03 (Cheap Field Arithmetic)
+                // P = 2^256 - 2^32 - 977 (secp256k1 field modulus)
+                const P = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
+                // ss1 is uncompressed: 0x04 + X (64 hex) + Y (64 hex)
+                // We assume ethers returns uncompressed 0x04 format (130 hex chars + 0x prefix = 132)
+                if (ss1.startsWith("0x04") && ss1.length === 132) {
+                    const xHex = ss1.slice(4, 68);
+                    const yHex = ss1.slice(68);
+                    const y = BigInt("0x" + yHex);
+                    const yNeg = P - y;
+                    const yNegHex = yNeg.toString(16).padStart(64, "0");
+                    const ss2 = "0x04" + xHex + yNegHex;
+
+                    const hTag2 = ethers.keccak256(ss2);
+                    const computedTag2 = hTag2.slice(0, 6).toLowerCase();
+
+                    if (computedTag2 === normalizedTag) {
+                        return tryCheck("0x03" + pk);
+                    }
+                } else {
+                    // Fallback if ss1 format is unexpected
+                    return tryCheck("0x03" + pk);
+                }
+
+                return null;
+            } catch (err) {
+                // If 0x02 is invalid curve point, then X is invalid, so 0x03 is also invalid.
+                return null;
+            }
+        }
+
         return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
     }
 
