@@ -19,6 +19,19 @@ const toHex = (arr: Uint8Array) =>
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
+// secp256k1 Curve Prime P
+const CURVE_P = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
+
+/**
+ * Negate the Y coordinate of a point on secp256k1 (P - y) mod P
+ * Used to derive the shared secret for 0x03 prefix from 0x02 prefix without re-multiplication.
+ */
+function negateY(yHex: string): string {
+    const y = BigInt("0x" + yHex);
+    const negY = (CURVE_P - y) % CURVE_P;
+    return negY.toString(16).padStart(64, '0');
+}
+
 /**
  * Normalize public key to compressed format (33 bytes)
  */
@@ -234,6 +247,62 @@ export function checkStealthAddress(
     // If pk is 32 bytes (64 chars + 0x), try with both 0x02 and 0x03 prefixes (pkx reconstruction).
     let pk = ephemeralPubKey;
     if (pk.startsWith("0x")) pk = pk.slice(2);
+
+    // X-only optimization: When we have an X coordinate (64 hex), we can avoid 2 EC mults.
+    // We compute shared secret for 0x02, check tag. If fails, we negate Y to get shared secret for 0x03.
+    if (pk.length === 64 && viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+        try {
+            const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+            const tagLength = normalizedTag.length; // e.g. 4 for 1 byte (0x12), 6 for 2 bytes (0x1234)
+
+            // 1. Try 0x02 prefix
+            const pk02 = "0x02" + pk;
+
+            // Compute shared secret for 02
+            const ss02 = viewingWallet.signingKey.computeSharedSecret(pk02);
+            // ss02 is uncompressed point: 0x04 (2) + X (64) + Y (64) = 130 chars (hex)
+
+            // Check tag for 02
+            const hTag02 = ethers.keccak256(ss02);
+            // Dynamic slice based on provided viewTag length
+            const computedTag02 = hTag02.slice(0, tagLength).toLowerCase();
+
+            if (computedTag02 === normalizedTag) {
+                // Found match with 0x02!
+                const w = openStealthAddress(announcedAddress, pk02, viewingPrivKey, spendingPrivKey);
+                if (w) return w;
+            }
+
+            // 2. Try 0x03 prefix using Negation Optimization
+            // We need the SS for 0x03 without doing EC mult.
+            // SS03.x = SS02.x
+            // SS03.y = -SS02.y (mod P)
+
+            // Extract Y from ss02 (0x04...X...Y)
+            // 0x (2) + 04 (2) + X (64) = 68 chars for prefix + X
+            const x = ss02.slice(4, 68);
+            const y02 = ss02.slice(68);
+            const y03 = negateY(y02);
+
+            // Reconstruct SS03: 0x04 + X + Y03
+            const ss03 = "0x04" + x + y03;
+
+            const hTag03 = ethers.keccak256(ss03);
+            const computedTag03 = hTag03.slice(0, tagLength).toLowerCase();
+
+            if (computedTag03 === normalizedTag) {
+                // Found match with 0x03!
+                const pk03 = "0x03" + pk;
+                const w = openStealthAddress(announcedAddress, pk03, viewingPrivKey, spendingPrivKey);
+                if (w) return w;
+            }
+
+            return null; // Both failed tag check
+
+        } catch (e) {
+            // Fallthrough to regular check if optimization fails for any reason
+        }
+    }
 
     if (pk.length === 66) {
         return tryCheck("0x" + pk);
