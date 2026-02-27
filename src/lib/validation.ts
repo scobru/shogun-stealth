@@ -95,6 +95,18 @@ export function sanitizeAlias(alias: string): string {
 }
 
 /**
+ * Checks if a string contains potentially unsafe characters (HTML/Script injection vectors).
+ * Explicitly disallows '<' and '>' characters.
+ * @param text The text to check.
+ * @returns True if safe, false if contains dangerous characters.
+ */
+export function isSafeText(text: string): boolean {
+  if (!text) return true;
+  // Disallow < and > to prevent HTML tag injection
+  return !/[<>]/.test(text);
+}
+
+/**
  * Validates a stealth announcement object.
  * @param data The data to validate.
  * @returns True if valid StealthAnnouncement, false otherwise.
@@ -126,6 +138,9 @@ export function isValidStealthAnnouncement(data: any): data is StealthAnnounceme
       // Security Enhancement: Limit metadata length to prevent DoS/memory issues
       // 4KB limit
       if (data.metadata.length > 4096) return false;
+
+      // Security Enhancement: Prevent HTML injection in metadata
+      if (!isSafeText(data.metadata)) return false;
   }
 
   return true;
