@@ -48,6 +48,7 @@ export const ScanAnnouncements: React.FC = () => {
       { to: string; sending: boolean; txHash?: string; error?: string }
     >
   >({});
+  const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
   const gun = core?.gun;
 
@@ -197,6 +198,14 @@ export const ScanAnnouncements: React.FC = () => {
     },
     [gun],
   );
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedStates((prev) => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setCopiedStates((prev) => ({ ...prev, [key]: false }));
+    }, 2000);
+  };
 
   /** Sweep all ETH from stealth address → destination on Sepolia */
   const sweepFunds = async (entry: OwnedAnnouncement) => {
@@ -422,11 +431,25 @@ export const ScanAnnouncements: React.FC = () => {
                         <button
                           className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
                           onClick={() =>
-                            navigator.clipboard.writeText(entry.stealthAddress)
+                            handleCopy(entry.stealthAddress, entry.id + "-addr")
+                          }
+                          aria-label={
+                            copiedStates[entry.id + "-addr"]
+                              ? "Address copied"
+                              : "Copy address"
                           }
                         >
-                          <span>📋</span>
-                          <span>COPY ADDR</span>
+                          {copiedStates[entry.id + "-addr"] ? (
+                            <>
+                              <span>✅</span>
+                              <span>COPIED!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📋</span>
+                              <span>COPY ADDR</span>
+                            </>
+                          )}
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
@@ -454,11 +477,18 @@ export const ScanAnnouncements: React.FC = () => {
                             <button
                               className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
                               onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
+                                handleCopy(
+                                  entry.privateKey,
+                                  entry.id + "-pk",
+                                )
                               }
-                              aria-label="Copy private key"
+                              aria-label={
+                                copiedStates[entry.id + "-pk"]
+                                  ? "Private key copied"
+                                  : "Copy private key"
+                              }
                             >
-                              📋
+                              {copiedStates[entry.id + "-pk"] ? "✅" : "📋"}
                             </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">

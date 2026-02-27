@@ -8,26 +8,27 @@ export const ThemeToggle: React.FC = () => {
   // Initialize theme state from localStorage
   const [currentTheme, setCurrentTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
-    return (savedTheme && themes.includes(savedTheme as Theme)) ? (savedTheme as Theme) : "dark";
+    return (savedTheme && (themes as readonly string[]).includes(savedTheme)) ? (savedTheme as Theme) : "dark";
   });
 
-  // Update theme in localStorage and apply to document
-  const setTheme = (theme: Theme) => {
-    setCurrentTheme(theme);
+  // Function to apply theme to document
+  const applyTheme = (theme: Theme) => {
     localStorage.setItem('theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.classList.remove(...themes);
+    // Remove all theme classes first
+    themes.forEach(t => document.documentElement.classList.remove(t));
     document.documentElement.classList.add(theme);
   };
 
-  // Initialize theme on component mount
+  // Initialize theme on component mount and when currentTheme changes
   useEffect(() => {
-    setTheme(currentTheme);
-  }, []);
+    applyTheme(currentTheme);
+  }, [currentTheme]);
 
   // Handle theme change
   const handleThemeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTheme(e.target.value as Theme);
+    const newTheme = e.target.value as Theme;
+    setCurrentTheme(newTheme);
   };
 
   return (
@@ -75,4 +76,3 @@ export const ThemeToggle: React.FC = () => {
 };
 
 export default ThemeToggle;
-
