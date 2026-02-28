@@ -174,14 +174,14 @@ export const ScanAnnouncements: React.FC = () => {
     }
   };
 
-  const toggleRevealKey = (id: string) => {
+  const toggleRevealKey = useCallback((id: string) => {
     setRevealedKeys((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
+  }, []);
 
   const handleRemoveAnnouncement = useCallback(
     async (annId: string) => {
@@ -199,7 +199,7 @@ export const ScanAnnouncements: React.FC = () => {
   );
 
   /** Sweep all ETH from stealth address → destination on Sepolia */
-  const sweepFunds = async (entry: OwnedAnnouncement) => {
+  const sweepFunds = useCallback(async (entry: OwnedAnnouncement) => {
     const state = sweepState[entry.id];
     if (!state?.to || !ethers.isAddress(state.to)) {
       setSweepState((prev) => ({
@@ -281,7 +281,7 @@ export const ScanAnnouncements: React.FC = () => {
         [entry.id]: { ...state, sending: false, error: e.message },
       }));
     }
-  };
+  }, [currentNetwork, sweepState]);
 
   if (!isLoggedIn) {
     return (
