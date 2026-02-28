@@ -513,7 +513,7 @@ export const SendStealth: React.FC = () => {
               {stealthAddress}
             </code>
             <button
-              className="absolute top-10 right-10 w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center border-2 border-secondary/20 hover:bg-secondary hover:text-base-100 transition-all opacity-40 hover:opacity-100"
+              className="tooltip tooltip-left absolute top-10 right-10 w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center border-2 border-secondary/20 hover:bg-secondary hover:text-base-100 transition-all opacity-40 hover:opacity-100"
               onClick={() => {
                 navigator.clipboard.writeText(stealthAddress)
                   .then(() => {
@@ -522,6 +522,7 @@ export const SendStealth: React.FC = () => {
                   })
                   .catch((e) => console.error(e));
               }}
+              data-tip={isCopied ? "Copied!" : "Copy stealth address"}
               aria-label={isCopied ? "Copied!" : "Copy stealth address"}
             >
               {isCopied ? "✅" : "📋"}

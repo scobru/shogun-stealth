@@ -41,6 +41,7 @@ export const ScanAnnouncements: React.FC = () => {
   const [totalAnnouncements, setTotalAnnouncements] = useState(0);
   const [status, setStatus] = useState<string>("");
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
+  const [copiedStates, setCopiedStates] = useState<Record<string, "addr" | "pk" | null>>({});
   // Sweep state: entryId → { toAddress, isSending, txHash, error }
   const [sweepState, setSweepState] = useState<
     Record<
@@ -181,6 +182,15 @@ export const ScanAnnouncements: React.FC = () => {
       else next.add(id);
       return next;
     });
+  };
+
+  const copyText = (id: string, type: "addr" | "pk", text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedStates((prev) => ({ ...prev, [id]: type }));
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [id]: null }));
+      }, 2000);
+    }).catch(console.error);
   };
 
   const handleRemoveAnnouncement = useCallback(
@@ -421,12 +431,19 @@ export const ScanAnnouncements: React.FC = () => {
                         </button>
                         <button
                           className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
-                          onClick={() =>
-                            navigator.clipboard.writeText(entry.stealthAddress)
-                          }
+                          onClick={() => copyText(entry.id, "addr", entry.stealthAddress)}
                         >
-                          <span>📋</span>
-                          <span>COPY ADDR</span>
+                          {copiedStates[entry.id] === "addr" ? (
+                            <>
+                              <span>✅</span>
+                              <span>COPIED!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📋</span>
+                              <span>COPY ADDR</span>
+                            </>
+                          )}
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
@@ -452,13 +469,12 @@ export const ScanAnnouncements: React.FC = () => {
                               {entry.privateKey}
                             </code>
                             <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
-                              onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
-                              }
+                              className="tooltip tooltip-left absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
+                              onClick={() => copyText(entry.id, "pk", entry.privateKey)}
+                              data-tip={copiedStates[entry.id] === "pk" ? "Copied!" : "Copy private key"}
                               aria-label="Copy private key"
                             >
-                              📋
+                              {copiedStates[entry.id] === "pk" ? "✅" : "📋"}
                             </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
