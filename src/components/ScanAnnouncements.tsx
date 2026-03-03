@@ -41,6 +41,8 @@ export const ScanAnnouncements: React.FC = () => {
   const [totalAnnouncements, setTotalAnnouncements] = useState(0);
   const [status, setStatus] = useState<string>("");
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copiedAddrId, setCopiedAddrId] = useState<string | null>(null);
   // Sweep state: entryId → { toAddress, isSending, txHash, error }
   const [sweepState, setSweepState] = useState<
     Record<
@@ -181,6 +183,18 @@ export const ScanAnnouncements: React.FC = () => {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleCopyAddr = (id: string, addr: string) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddrId(id);
+    setTimeout(() => setCopiedAddrId(null), 2000);
+  };
+
+  const handleCopyPk = (id: string, pk: string) => {
+    navigator.clipboard.writeText(pk);
+    setCopiedKeyId(id);
+    setTimeout(() => setCopiedKeyId(null), 2000);
   };
 
   const handleRemoveAnnouncement = useCallback(
@@ -422,11 +436,20 @@ export const ScanAnnouncements: React.FC = () => {
                         <button
                           className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
                           onClick={() =>
-                            navigator.clipboard.writeText(entry.stealthAddress)
+                            handleCopyAddr(entry.id, entry.stealthAddress)
                           }
                         >
-                          <span>📋</span>
-                          <span>COPY ADDR</span>
+                          {copiedAddrId === entry.id ? (
+                            <>
+                              <span className="text-success">✅</span>
+                              <span className="text-success">COPIED!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📋</span>
+                              <span>COPY ADDR</span>
+                            </>
+                          )}
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
@@ -452,13 +475,14 @@ export const ScanAnnouncements: React.FC = () => {
                               {entry.privateKey}
                             </code>
                             <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
+                              className="tooltip tooltip-left absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
                               onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
+                                handleCopyPk(entry.id, entry.privateKey)
                               }
+                              data-tip={copiedKeyId === entry.id ? "Copied!" : "Copy Private Key"}
                               aria-label="Copy private key"
                             >
-                              📋
+                              {copiedKeyId === entry.id ? "✅" : "📋"}
                             </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
