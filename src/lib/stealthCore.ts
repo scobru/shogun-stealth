@@ -200,17 +200,21 @@ export function checkStealthAddress(
     // So if viewingKey is a Wallet, we need its private key string for openStealthAddress.
     const viewingPrivKey = viewingWallet.privateKey;
 
+    // Optimization: normalize viewTag once outside tryCheck
+    const normalizedTag = (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01")
+        ? (viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase())
+        : null;
+
     const tryCheck = (pk: string): ethers.Wallet | null => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
             // 1. Optional fast tag check
-            if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+            if (normalizedTag) {
                 // Use the pre-computed wallet/key pair
                 const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
                 const hTag = ethers.keccak256(ssTag);
-                const computedTag = hTag.slice(0, 6).toLowerCase();
-                const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+                const computedTag = hTag.slice(0, 6);
 
                 if (computedTag !== normalizedTag) {
                     return null;
