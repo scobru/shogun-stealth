@@ -41,6 +41,8 @@ export const ScanAnnouncements: React.FC = () => {
   const [totalAnnouncements, setTotalAnnouncements] = useState(0);
   const [status, setStatus] = useState<string>("");
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
+  const [copiedAddr, setCopiedAddr] = useState<Set<string>>(new Set());
+  const [copiedPk, setCopiedPk] = useState<Set<string>>(new Set());
   // Sweep state: entryId → { toAddress, isSending, txHash, error }
   const [sweepState, setSweepState] = useState<
     Record<
@@ -421,12 +423,29 @@ export const ScanAnnouncements: React.FC = () => {
                         </button>
                         <button
                           className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
-                          onClick={() =>
-                            navigator.clipboard.writeText(entry.stealthAddress)
-                          }
+                          onClick={() => {
+                            navigator.clipboard.writeText(entry.stealthAddress);
+                            setCopiedAddr((prev) => new Set(prev).add(entry.id));
+                            setTimeout(() => {
+                              setCopiedAddr((prev) => {
+                                const next = new Set(prev);
+                                next.delete(entry.id);
+                                return next;
+                              });
+                            }, 2000);
+                          }}
                         >
-                          <span>📋</span>
-                          <span>COPY ADDR</span>
+                          {copiedAddr.has(entry.id) ? (
+                            <>
+                              <span>✅</span>
+                              <span>COPIED!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📋</span>
+                              <span>COPY ADDR</span>
+                            </>
+                          )}
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
@@ -452,13 +471,22 @@ export const ScanAnnouncements: React.FC = () => {
                               {entry.privateKey}
                             </code>
                             <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
-                              onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
-                              }
-                              aria-label="Copy private key"
+                              className="tooltip tooltip-left absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
+                              data-tip={copiedPk.has(entry.id) ? "Copied!" : "Copy Private Key"}
+                              onClick={() => {
+                                navigator.clipboard.writeText(entry.privateKey);
+                                setCopiedPk((prev) => new Set(prev).add(entry.id));
+                                setTimeout(() => {
+                                  setCopiedPk((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(entry.id);
+                                    return next;
+                                  });
+                                }, 2000);
+                              }}
+                              aria-label={copiedPk.has(entry.id) ? "Copied private key" : "Copy private key"}
                             >
-                              📋
+                              {copiedPk.has(entry.id) ? "✅" : "📋"}
                             </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
