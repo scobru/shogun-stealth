@@ -200,17 +200,23 @@ export function checkStealthAddress(
     // So if viewingKey is a Wallet, we need its private key string for openStealthAddress.
     const viewingPrivKey = viewingWallet.privateKey;
 
+    // ⚡ Bolt: Hoist view tag validation outside the check loop to prevent redundant string
+    // manipulation during dual-evaluations of X-only keys (where tryCheck is called twice).
+    let normalizedTag: string | null = null;
+    if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+        normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+    }
+
     const tryCheck = (pk: string): ethers.Wallet | null => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
             // 1. Optional fast tag check
-            if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+            if (normalizedTag) {
                 // Use the pre-computed wallet/key pair
                 const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
                 const hTag = ethers.keccak256(ssTag);
                 const computedTag = hTag.slice(0, 6).toLowerCase();
-                const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
 
                 if (computedTag !== normalizedTag) {
                     return null;
