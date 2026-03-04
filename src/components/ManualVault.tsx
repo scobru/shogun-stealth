@@ -103,6 +103,9 @@ const ManualVault: React.FC = () => {
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
               aria-label="Private Key"
+              autoComplete="off"
+              spellCheck="false"
+              data-lpignore="true"
             />
             <button
               type="button"
