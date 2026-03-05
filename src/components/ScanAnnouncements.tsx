@@ -41,6 +41,8 @@ export const ScanAnnouncements: React.FC = () => {
   const [totalAnnouncements, setTotalAnnouncements] = useState(0);
   const [status, setStatus] = useState<string>("");
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
+  const [copiedAddressId, setCopiedAddressId] = useState<string | null>(null);
+  const [copiedPkId, setCopiedPkId] = useState<string | null>(null);
   // Sweep state: entryId → { toAddress, isSending, txHash, error }
   const [sweepState, setSweepState] = useState<
     Record<
@@ -420,13 +422,16 @@ export const ScanAnnouncements: React.FC = () => {
                           )}
                         </button>
                         <button
-                          className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]"
-                          onClick={() =>
-                            navigator.clipboard.writeText(entry.stealthAddress)
-                          }
+                          className="sharp-button !bg-base-content !text-base-100 !py-4 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.2)] flex items-center gap-2 transition-transform active:scale-95 hover:shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)] tooltip tooltip-bottom before:text-[10px]"
+                          data-tip={copiedAddressId === entry.id ? "Copied!" : "Copy Stealth Address"}
+                          onClick={() => {
+                            navigator.clipboard.writeText(entry.stealthAddress);
+                            setCopiedAddressId(entry.id);
+                            setTimeout(() => setCopiedAddressId(null), 2000);
+                          }}
                         >
-                          <span>📋</span>
-                          <span>COPY ADDR</span>
+                          <span>{copiedAddressId === entry.id ? "✅" : "📋"}</span>
+                          <span>{copiedAddressId === entry.id ? "COPIED" : "COPY ADDR"}</span>
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
@@ -452,13 +457,16 @@ export const ScanAnnouncements: React.FC = () => {
                               {entry.privateKey}
                             </code>
                             <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
-                              onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
-                              }
+                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100 tooltip tooltip-left before:text-[10px]"
+                              data-tip={copiedPkId === entry.id ? "Copied!" : "Copy private key"}
+                              onClick={() => {
+                                navigator.clipboard.writeText(entry.privateKey);
+                                setCopiedPkId(entry.id);
+                                setTimeout(() => setCopiedPkId(null), 2000);
+                              }}
                               aria-label="Copy private key"
                             >
-                              📋
+                              {copiedPkId === entry.id ? "✅" : "📋"}
                             </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
