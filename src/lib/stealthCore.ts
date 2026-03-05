@@ -238,7 +238,50 @@ export function checkStealthAddress(
     if (pk.length === 66) {
         return tryCheck("0x" + pk);
     } else if (pk.length === 64) {
-        return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
+        // Optimization: For X-only keys, when view tags are used, compute the shared secret for the
+        // 0x02 prefix, and derive the 0x03 shared secret by negating the Y-coordinate.
+        // This halves the amount of expensive EC derivation needed.
+        if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
+            try {
+                const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
+                const normalized02 = normalizePublicKey("0x02" + pk);
+
+                // 1. Check 0x02 prefix natively
+                const ss02 = viewingWallet.signingKey.computeSharedSecret(normalized02);
+                const hTag02 = ethers.keccak256(ss02);
+                const computedTag02 = hTag02.slice(0, 6).toLowerCase();
+
+                let result: ethers.Wallet | null = null;
+                if (computedTag02 === normalizedTag) {
+                    try {
+                        result = openStealthAddress(announcedAddress, normalized02, viewingPrivKey, spendingPrivKey);
+                    } catch {} // Collision, continue to check 0x03
+                }
+
+                if (result) return result;
+
+                // 2. Check 0x03 prefix using derived shared secret (Y-coordinate negation)
+                const P_field = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
+                const xHex = ss02.substring(4, 68);
+                const yHex = ss02.substring(68);
+                const y = BigInt("0x" + yHex);
+                const yNeg = (P_field - y) % P_field;
+                const ss03 = "0x04" + xHex + yNeg.toString(16).padStart(64, '0');
+
+                const hTag03 = ethers.keccak256(ss03);
+                const computedTag03 = hTag03.slice(0, 6).toLowerCase();
+
+                if (computedTag03 === normalizedTag) {
+                    const normalized03 = normalizePublicKey("0x03" + pk);
+                    return openStealthAddress(announcedAddress, normalized03, viewingPrivKey, spendingPrivKey);
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        } else {
+            return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
+        }
     }
 
     return null;
