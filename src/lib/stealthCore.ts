@@ -144,8 +144,8 @@ export function generateStealthAddress(
 
     // 3. Use Fluidkey to generate the stealth address
     const result = generateStealthAddresses({
-        ephemeralPrivateKey: ephemeralPrivateKey,
-        spendingPublicKeys: [normalizedSpendingKey],
+        ephemeralPrivateKey: ephemeralPrivateKey as `0x${string}`,
+        spendingPublicKeys: [normalizedSpendingKey as `0x${string}`],
     });
 
     return {
@@ -162,7 +162,7 @@ export function generateStealthAddress(
 export function openStealthAddress(
     stealthAddress: string,
     ephemeralPublicKey: string,
-    viewingPrivKey: string,
+    _viewingPrivKey: string,
     spendingPrivKey: string
 ): ethers.Wallet {
     // Normalize keys
@@ -170,8 +170,8 @@ export function openStealthAddress(
 
     // Try Fluidkey
     const result = generateStealthPrivateKey({
-        ephemeralPublicKey: normalizedEphemeralKey,
-        spendingPrivateKey: spendingPrivKey,
+        ephemeralPublicKey: normalizedEphemeralKey as `0x${string}`,
+        spendingPrivateKey: spendingPrivKey as `0x${string}`,
     });
 
     const wallet = new ethers.Wallet(result.stealthPrivateKey);
@@ -186,6 +186,9 @@ export function openStealthAddress(
 /**
  * Scan an announcement to see if it belongs to the receiver.
  */
+// Field prime for secp256k1 (used for fast Y-coordinate negation in shared secret derivation)
+const P_FIELD = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+
 export function checkStealthAddress(
     ephemeralPubKey: string,
     viewingKey: string | ethers.Wallet,
@@ -195,22 +198,22 @@ export function checkStealthAddress(
 ): ethers.Wallet | null {
     const viewingWallet =
         typeof viewingKey === "string" ? new ethers.Wallet(viewingKey) : viewingKey;
-    // If viewingKey is a string, we might need it later for openStealthAddress if we don't pass the wallet there?
-    // Actually openStealthAddress takes viewingPrivKey as string.
-    // So if viewingKey is a Wallet, we need its private key string for openStealthAddress.
     const viewingPrivKey = viewingWallet.privateKey;
 
-    const tryCheck = (pk: string): ethers.Wallet | null => {
+    // Fast-path: Pre-normalize tag outside the loop
+    const hasTag = viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01";
+    const normalizedTag = hasTag ? (viewTag!.startsWith("0x") ? viewTag!.toLowerCase() : "0x" + viewTag!.toLowerCase()) : null;
+
+    const tryCheck = (pk: string, precomputedSS?: string): ethers.Wallet | null => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
             // 1. Optional fast tag check
-            if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
-                // Use the pre-computed wallet/key pair
-                const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
+            if (hasTag) {
+                // Reuse precomputed shared secret if available to avoid redundant EC multiplication
+                const ssTag = precomputedSS || viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
                 const hTag = ethers.keccak256(ssTag);
                 const computedTag = hTag.slice(0, 6).toLowerCase();
-                const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
 
                 if (computedTag !== normalizedTag) {
                     return null;
@@ -238,7 +241,34 @@ export function checkStealthAddress(
     if (pk.length === 66) {
         return tryCheck("0x" + pk);
     } else if (pk.length === 64) {
-        return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
+        const pk02 = "0x02" + pk;
+        const pk03 = "0x03" + pk;
+
+        // X-only Optimization: If we have a tag, compute 0x02 shared secret via EC mult.
+        // Then derive 0x03 shared secret via fast modular negation of the Y-coordinate (p - Y),
+        // bypassing a second expensive EC multiplication (~50% speedup per X-only scan).
+        if (hasTag) {
+            try {
+                const ss02 = viewingWallet.signingKey.computeSharedSecret(normalizePublicKey(pk02));
+
+                const match02 = tryCheck(pk02, ss02);
+                if (match02) return match02;
+
+                // Derive 0x03 shared secret by negating Y
+                const xHex = ss02.slice(4, 68);
+                const yHex = ss02.slice(68, 132);
+                const y = BigInt("0x" + yHex);
+                const negatedY = P_FIELD - y;
+                const negatedYHex = negatedY.toString(16).padStart(64, "0");
+                const ss03 = "0x04" + xHex + negatedYHex;
+
+                return tryCheck(pk03, ss03);
+            } catch (e) {
+                // Fallback to unoptimized path if EC math fails
+            }
+        }
+
+        return tryCheck(pk02) || tryCheck(pk03);
     }
 
     return null;

@@ -20,7 +20,7 @@ describe('Stealth Scanning Benchmark', () => {
         id: "ann-match",
         ephemeralPubKey: matching.ephemeralPubKey,
         stealthAddress: matching.stealthAddress,
-        viewTag: undefined, // Force slow path even for match
+        viewTag: "", // Force slow path even for match
         timestamp: Date.now(),
     });
 
@@ -33,7 +33,7 @@ describe('Stealth Scanning Benchmark', () => {
             id: `ann-${i}`,
             ephemeralPubKey: compressedKey,
             stealthAddress: randomWallet.address,
-            viewTag: undefined, // FORCE SLOW PATH (no tag)
+            viewTag: "", // FORCE SLOW PATH (no tag)
             timestamp: Date.now(),
         });
     }
