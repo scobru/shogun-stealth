@@ -513,7 +513,8 @@ export const SendStealth: React.FC = () => {
               {stealthAddress}
             </code>
             <button
-              className="absolute top-10 right-10 w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center border-2 border-secondary/20 hover:bg-secondary hover:text-base-100 transition-all opacity-40 hover:opacity-100"
+              className="tooltip tooltip-left absolute top-10 right-10 w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center border-2 border-secondary/20 hover:bg-secondary hover:text-base-100 transition-all opacity-40 hover:opacity-100"
+              data-tip={isCopied ? "Copied!" : "Copy stealth address"}
               onClick={() => {
                 navigator.clipboard.writeText(stealthAddress)
                   .then(() => {
@@ -620,7 +621,8 @@ export const SendStealth: React.FC = () => {
                         `${currentNetwork.explorerUrl}/address/${senderEthAddress}`,
                       )
                     }
-                    className="sharp-button !bg-base-300 !text-base-content p-4 border-4"
+                    className="tooltip tooltip-bottom sharp-button !bg-base-300 !text-base-content p-4 border-4"
+                    data-tip="View on block explorer"
                     aria-label="View address on block explorer"
                   >
                     🔎
