@@ -95,6 +95,7 @@ const ManualVault: React.FC = () => {
             Master Private Key Access
           </label>
           <div className="relative">
+            {/* 🛡️ Sentinel Security: Prevent browser caching, autocompletion, and extension snooping of master private key */}
             <input
               id="privateKey"
               type={isVisible ? "text" : "password"}
