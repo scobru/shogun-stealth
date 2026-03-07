@@ -8,7 +8,7 @@
 **Learning:** Checking for `0x` and hex characters is insufficient for public keys. Cryptographic libraries expect specific byte lengths (32, 33, 65). Unbounded string fields in decentralized storage are a DoS vector.
 **Prevention:** Enforce strict length checks for cryptographic primitives (e.g. 66/68/132 hex chars for keys). Limit variable-length fields (e.g. max 4KB for metadata).
 
-## 2026-03-04 - Private Key Input Autocomplete Security
-**Vulnerability:** The private key input field in `ManualVault.tsx` did not have protections against browser caching, autocompletion, or password manager/extension snooping.
-**Learning:** Frontend inputs that handle sensitive cryptographic keys, like a master private key, must use specific attributes to ensure they are isolated from standard browser behaviors that can cache and leak the value.
-**Prevention:** Always use `autoComplete="off"`, `spellCheck="false"`, and `data-lpignore="true"` on sensitive input fields to ensure browsers, spellcheckers, and extensions like LastPass do not read, cache, or auto-fill sensitive cryptographic keys.
+## 2025-03-05 - Insecure Sensitive Input Fields
+**Vulnerability:** Input fields handling sensitive cryptographic keys (like master private keys) lacked HTML attributes to prevent caching and external interception.
+**Learning:** Browsers and extensions (like password managers, grammar checkers) can cache, autocomplete, or snooping on input fields by default. This risks leaking private keys to local storage or third-party services.
+**Prevention:** Always use `autoComplete="off"`, `spellCheck="false"`, and `data-lpignore="true"` on sensitive frontend inputs.
