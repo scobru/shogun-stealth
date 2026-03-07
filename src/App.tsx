@@ -146,7 +146,8 @@ interface ShogunAppProps {
 
 function ShogunApp({ shogun, options }: ShogunAppProps) {
   const handleLoginSuccess = useCallback((result: any) => {
-    console.log("Login success:", result);
+    // SECURITY: Do not log the `result` object to prevent leaking sensitive auth data (like SEA keys) to the console.
+    console.log("Login success");
   }, []);
 
   const handleError = useCallback((error: string | Error) => {

@@ -32,6 +32,11 @@ export async function publishStealthKeys(
             updatedAt: Date.now(),
         };
 
+        if (!isValidStealthRegistryEntry(entry)) {
+            reject(new Error("Invalid stealth registry entry"));
+            return;
+        }
+
         gun
             .get(STEALTH_REGISTRY)
             .get(pub)
@@ -108,6 +113,10 @@ export async function publishAnnouncement(
         id,
         timestamp: Date.now(),
     };
+
+    if (!isValidStealthAnnouncement(full)) {
+        return Promise.reject(new Error("Invalid stealth announcement"));
+    }
 
     return new Promise((resolve, reject) => {
         gun
