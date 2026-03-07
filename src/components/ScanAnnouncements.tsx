@@ -409,12 +409,12 @@ export const ScanAnnouncements: React.FC = () => {
                         >
                           {revealedKeys.has(entry.id) ? (
                             <>
-                              <span className="text-lg">🔒</span>
+                              <span className="text-lg" aria-hidden="true">🔒</span>
                               <span>SEAL KEY</span>
                             </>
                           ) : (
                             <>
-                              <span className="text-lg">🔑</span>
+                              <span className="text-lg" aria-hidden="true">🔑</span>
                               <span>REVEAL SECRET</span>
                             </>
                           )}
@@ -425,14 +425,14 @@ export const ScanAnnouncements: React.FC = () => {
                             navigator.clipboard.writeText(entry.stealthAddress)
                           }
                         >
-                          <span>📋</span>
+                          <span aria-hidden="true">📋</span>
                           <span>COPY ADDR</span>
                         </button>
                         <button
                           className="sharp-button !bg-transparent !text-error !border-error !py-4 flex items-center gap-2 transition-all hover:!bg-error hover:!text-base-100 shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),0.1)] hover:shadow-[8px_8px_0px_0px_rgba(var(--er-rgb,0,0,0),1)]"
                           onClick={() => handleRemoveAnnouncement(entry.id)}
                         >
-                          <span>🗑️</span>
+                          <span aria-hidden="true">🗑️</span>
                           <span>PURGE</span>
                         </button>
                       </div>
