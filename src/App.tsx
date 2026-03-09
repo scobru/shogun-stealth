@@ -53,7 +53,7 @@ const MainApp: React.FC = () => {
             <img src={logo} alt="Shogun Stealth" className="w-14 h-14" />
             <div className="flex flex-col">
               <span className="font-heading text-3xl font-bold tracking-tight text-primary">
-                Shogun Stealth
+                Stealth
               </span>
               <p className="text-[9px] font-bold text-base-content/40 uppercase tracking-[0.4em]">
                 Private Stealth Transactions
