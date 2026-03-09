@@ -157,7 +157,7 @@ function ShogunApp({ shogun }: ShogunAppProps) {
   };
 
   const handleLoginSuccess = (result: any) => {
-    console.log("Login success:", result);
+    // Login success
   };
 
   const handleError = (error: string | Error) => {
@@ -263,9 +263,7 @@ function App() {
       if (typeof window !== "undefined") {
         // Wait a bit for Gun to initialize
         setTimeout(() => {
-          console.log("ShogunCore after initialization:", shogunCore);
           const gunInstance = shogunCore.gun;
-          console.log("Gun instance found:", gunInstance);
 
           window.shogunDebug = {
             clearAllData: () => {
@@ -283,9 +281,6 @@ function App() {
 
           window.gun = gunInstance;
           window.shogun = shogunCore;
-          console.log("Debug methods available at window.shogunDebug");
-          console.log("Available debug methods:", Object.keys(window.shogunDebug));
-          console.log("Initialized with relays:", relays);
         }, 1000);
       }
 
