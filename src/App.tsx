@@ -21,6 +21,9 @@ import logo from "/logo.svg";
 import "./index.css";
 import "shogun-relays";
 
+// Default Gun peers to use as fallback
+const DEFAULT_GUN_PEERS = ["https://peer.wallie.io/gun"];
+
 // Extend window interface for ShogunRelays
 declare global {
   interface Window {
@@ -203,13 +206,13 @@ function App() {
         const peersToUse =
           fetchedRelays && fetchedRelays.length > 0
             ? fetchedRelays
-            : ["https://peer.wallie.io/gun"];
+            : DEFAULT_GUN_PEERS;
 
         setRelays(peersToUse);
       } catch (error) {
         console.error("Error fetching relays:", error);
         // Fallback to default peer
-        setRelays(["https://peer.wallie.io/gun"]);
+        setRelays(DEFAULT_GUN_PEERS);
       } finally {
         setIsLoadingRelays(false);
       }
