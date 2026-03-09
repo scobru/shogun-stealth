@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
+// List of available themes
+const themes = ["light", "dark"] as const;
+type Theme = typeof themes[number];
+
 export const ThemeToggle: React.FC = () => {
-  // List of available themes
-  const themes = ["light", "dark"] as const;
-  type Theme = typeof themes[number];
-  
   // Initialize theme state from localStorage
   const [currentTheme, setCurrentTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
