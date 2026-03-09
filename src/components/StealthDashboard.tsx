@@ -63,7 +63,7 @@ export const StealthDashboard: React.FC = () => {
                 vaults and cryptographic scanning tools.
               </p>
             </div>
-            <div className="flex justify-center scale-110">
+            <div className="flex justify-center">
               <ShogunButton className="btn-primary-bloom" />
             </div>
           </div>

@@ -4,35 +4,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="wallet.blocknative" content="false"/>
-  <meta name="disabled-metamask" content="true"/>
-  <meta name="disabled-enkrypt" content="true"/>
+  <meta name="wallet.blocknative" content="false" />
+  <meta name="disabled-metamask" content="true" />
+  <meta name="disabled-enkrypt" content="true" />
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-  <title>Shogun Starter App</title>
-  
+  <title>Stealth | Shogun-eco</title>
+
   <!-- Critical wallet conflicts prevention script - must run before anything else -->
   <script>
-    (function() {
+    (function () {
       // Create providers registry
       window._ethereumProviders = [];
-      
+
       // Store reference to any existing ethereum provider
       const existingEthereum = window.ethereum;
       if (existingEthereum) {
         window._ethereumProviders.push(existingEthereum);
         console.log('Preserved existing ethereum provider');
       }
-      
+
       // Create a proxy that handles multiple providers gracefully
       const ethereumProxy = new Proxy({}, {
-        get: function(target, prop) {
+        get: function (target, prop) {
           if (prop === '_isProxy') return true;
-          
+
           // For event methods, aggregate across all providers
-          if (prop === 'on' || prop === 'once' || prop === 'removeListener' || 
-              prop === 'removeAllListeners' || prop === 'addListener') {
-            return function(...args) {
+          if (prop === 'on' || prop === 'once' || prop === 'removeListener' ||
+            prop === 'removeAllListeners' || prop === 'addListener') {
+            return function (...args) {
               const results = [];
               for (const provider of window._ethereumProviders) {
                 if (provider && typeof provider[prop] === 'function') {
@@ -46,42 +46,42 @@
               return results.length === 1 ? results[0] : results;
             };
           }
-          
+
           // For critical methods, prefer first provider
           if (prop === 'request' || prop === 'sendAsync' || prop === 'send' || prop === 'enable') {
             for (const provider of window._ethereumProviders) {
               if (provider && typeof provider[prop] === 'function') {
-                return function(...args) {
+                return function (...args) {
                   return provider[prop].apply(provider, args);
                 };
               }
             }
           }
-          
+
           // For properties, take from first provider that has it
           for (const provider of window._ethereumProviders) {
             if (provider && prop in provider) {
               const value = provider[prop];
-              return typeof value === 'function' ? 
-                function(...args) { return provider[prop].apply(provider, args); } : 
+              return typeof value === 'function' ?
+                function (...args) { return provider[prop].apply(provider, args); } :
                 value;
             }
           }
-          
+
           // Return undefined in a way that doesn't break method calls
-          return prop === 'then' ? undefined : function() { return undefined; };
+          return prop === 'then' ? undefined : function () { return undefined; };
         },
-        set: function(target, prop, value) {
+        set: function (target, prop, value) {
           console.log(`Intercepted ethereum.${prop} setting attempt`);
           return true;
         },
-        has: function(target, prop) {
-          return window._ethereumProviders.some(provider => 
+        has: function (target, prop) {
+          return window._ethereumProviders.some(provider =>
             provider && (prop in provider)
           ) || prop === '_isProxy';
         }
       });
-      
+
       // Aggressive approach to handle the ethereum property
       try {
         const desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
@@ -91,10 +91,10 @@
           Object.defineProperty(window, 'ethereum', {
             configurable: true,
             enumerable: true,
-            get: function() {
+            get: function () {
               return ethereumProxy;
             },
-            set: function(newProvider) {
+            set: function (newProvider) {
               console.log('Intercepted ethereum provider assignment');
               if (newProvider && !window._ethereumProviders.includes(newProvider)) {
                 window._ethereumProviders.push(newProvider);
@@ -109,30 +109,30 @@
             window._ethereumProviders.push(existingEthereum);
           }
         }
-        
+
         console.log('Successfully installed ethereum protection layer');
-        
+
         // Global error handler for suppressing wallet errors
         const originalError = window.onerror;
-        window.onerror = function(message, source, lineno, colno, error) {
-          if (message && typeof message === 'string' && 
-              (message.includes('ethereum') || 
-               message.includes('wallet') || 
-               message.includes('MetaMask') ||
-               message.includes('cannot assign') || 
-               message.includes('read only'))) {
+        window.onerror = function (message, source, lineno, colno, error) {
+          if (message && typeof message === 'string' &&
+            (message.includes('ethereum') ||
+              message.includes('wallet') ||
+              message.includes('MetaMask') ||
+              message.includes('cannot assign') ||
+              message.includes('read only'))) {
             console.warn('Suppressed error:', message);
             return true; // Prevent error propagation
           }
-          
+
           if (originalError) {
             return originalError(message, source, lineno, colno, error);
           }
           return false;
         };
-        
+
         // Promise rejection handler
-        window.addEventListener('unhandledrejection', function(event) {
+        window.addEventListener('unhandledrejection', function (event) {
           if (event.reason && (event.reason.message || event.reason.toString()).match(
             /ethereum|metamask|cannot assign|read only/i
           )) {
@@ -145,7 +145,7 @@
       }
     })();
   </script>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <base href="/" />
@@ -157,4 +157,3 @@
 </body>
 
 </html>
-
