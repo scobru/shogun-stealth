@@ -7,6 +7,7 @@
  */
 
 import type { IGunInstance } from "gun";
+import { v4 as uuidv4 } from "uuid";
 import type { StealthAnnouncement, StealthKeys } from "./stealthCore";
 
 const STEALTH_REGISTRY = "shogun/stealth/registry/v2"; // Bumped version for 2-key model
@@ -101,7 +102,7 @@ export async function publishAnnouncement(
     gun: IGunInstance<any>,
     announcement: Omit<StealthAnnouncement, "id" | "timestamp">
 ): Promise<string> {
-    const id = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    const id = uuidv4();
     const full: StealthAnnouncement = {
         ...announcement,
         id,
