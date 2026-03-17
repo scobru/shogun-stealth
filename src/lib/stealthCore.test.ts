@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { deriveStealthKeysFromGun } from './stealthCore';
+import { deriveStealthKeysFromGun } from './stealthCore.ts';
 
 test('deriveStealthKeysFromGun - deterministic derivation', () => {
   const seaEpriv = 'test-sea-epriv-123';

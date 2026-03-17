@@ -73,7 +73,7 @@ export const StealthDashboard: React.FC = () => {
       {/* Tab Navigation */}
       <div className="space-y-12">
         <div className="flex justify-center">
-          <div className="bg-base-200 p-2 rounded-full border border-primary/5 flex gap-2">
+          <div className="bg-base-200 p-2 rounded-3xl border border-primary/5 flex flex-wrap justify-center gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
