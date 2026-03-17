@@ -17,7 +17,7 @@ import Gun from "gun";
 import "gun/sea";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { NetworkSelector } from "./components/NetworkSelector";
-import { NetworkProvider } from "./lib/NetworkContext";
+import { NetworkProvider, useNetwork } from "./lib/NetworkContext";
 import StealthDashboard from "./components/StealthDashboard";
 import logo from "/logo.svg";
 
@@ -44,6 +44,7 @@ declare global {
 // Main component that uses the auth context
 const MainApp: React.FC = () => {
   const { isLoggedIn } = useShogun();
+  const { currentNetwork } = useNetwork();
 
   return (
     <div className="app-shell">
@@ -101,7 +102,7 @@ const MainApp: React.FC = () => {
                 Network
               </a>
               <a
-                href="https://sepolia.basescan.org/address/0x6038197D7eb76ee668b37c61021619542F757B63"
+                href={`${currentNetwork.explorerUrl}/address/${currentNetwork.registryAddress}`}
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
@@ -109,7 +110,7 @@ const MainApp: React.FC = () => {
                 Registry
               </a>
               <a
-                href="https://sepolia.basescan.org/address/0x512edE537cb53dcbFC29629B4999c3e8f18799Eb"
+                href={`${currentNetwork.explorerUrl}/address/${currentNetwork.forwarderAddress}`}
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
