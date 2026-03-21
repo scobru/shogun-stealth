@@ -22,13 +22,13 @@ async function testStealth() {
     console.log("✅ Ephemeral Pub Key:", ephemeralPubKey);
 
     // 3. Receiver Scans
-    const isMine = checkStealthAddress(
+    const wallet = checkStealthAddress(
         ephemeralPubKey,
         receiverKeys.viewing.priv,
         receiverKeys.spending.pub,
         stealthAddress
     );
-    console.log("🔍 Scanning result:", isMine ? "MATCHED (Success)" : "FAILED");
+    console.log("🔍 Scanning result:", wallet ? "MATCHED (Success)" : "FAILED");
 
     // 4. Receiver Derives Private Key
     const privKey = deriveStealthPrivKey(

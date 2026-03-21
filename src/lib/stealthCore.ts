@@ -185,11 +185,11 @@ export function checkStealthAddress(
     announcedAddress: string,
     viewTag?: string,
     viewingSigningKey?: ethers.SigningKey
-): boolean {
+): ethers.Wallet | null {
     // Optimization: Use provided SigningKey or create once at function level
     const signingKey = viewingSigningKey || new ethers.SigningKey(viewingPrivKey);
 
-    const tryCheck = (pk: string) => {
+    const tryCheck = (pk: string): ethers.Wallet | null => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
@@ -201,20 +201,19 @@ export function checkStealthAddress(
                 const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
 
                 if (computedTag !== normalizedTag) {
-                    return false;
+                    return null;
                 }
             }
 
             // 2. Definitive check
-            openStealthAddress(
+            return openStealthAddress(
                 announcedAddress,
                 normalizedEphemeralKey,
                 viewingPrivKey,
                 spendingPrivKey
             );
-            return true;
         } catch {
-            return false;
+            return null;
         }
     };
 
@@ -229,7 +228,7 @@ export function checkStealthAddress(
         return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
     }
 
-    return false;
+    return null;
 }
 
 /**
@@ -249,28 +248,17 @@ export function scanAnnouncements(
     const viewingSigningKey = new ethers.SigningKey(keys.viewing.priv);
 
     for (const ann of announcements) {
-        if (
-            checkStealthAddress(
-                ann.ephemeralPubKey,
-                keys.viewing.priv,
-                keys.spending.priv,
-                ann.stealthAddress,
-                ann.viewTag,
-                viewingSigningKey
-            )
-        ) {
-            try {
-                const wallet = openStealthAddress(
-                    ann.stealthAddress,
-                    ann.ephemeralPubKey,
-                    keys.viewing.priv,
-                    keys.spending.priv
-                );
-                owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
-            } catch (e) {
-                // Should not happen if checkStealthAddress returned true
-                console.warn("[Stealth] Match check passed but open failed:", e);
-            }
+        const wallet = checkStealthAddress(
+            ann.ephemeralPubKey,
+            keys.viewing.priv,
+            keys.spending.priv,
+            ann.stealthAddress,
+            ann.viewTag,
+            viewingSigningKey
+        );
+
+        if (wallet) {
+            owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
         }
     }
 
