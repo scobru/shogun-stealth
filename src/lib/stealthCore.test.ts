@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { deriveStealthKeysFromGun } from './stealthCore.ts';
+import {
+  deriveStealthKeysFromGun,
+  generateStealthAddress,
+  checkStealthAddress
+} from './stealthCore.ts';
 
 test('deriveStealthKeysFromGun - deterministic derivation', () => {
   const seaEpriv = 'test-sea-epriv-123';
@@ -56,4 +60,89 @@ test('deriveStealthKeysFromGun - empty input', () => {
   assert.ok(keys.neuralPriv.startsWith('0x'));
   assert.ok(keys.spending.priv.startsWith('0x'));
   assert.ok(keys.viewing.priv.startsWith('0x'));
+});
+
+// --- checkStealthAddress tests ---
+
+test('checkStealthAddress - happy path (match)', () => {
+  const keys = deriveStealthKeysFromGun('test-match');
+  const { stealthAddress, ephemeralPubKey, viewTag } = generateStealthAddress(
+    keys.spending.pub,
+    keys.viewing.pub
+  );
+
+  const isMine = checkStealthAddress(
+    ephemeralPubKey,
+    keys.viewing.priv,
+    keys.spending.priv,
+    stealthAddress,
+    viewTag
+  );
+
+  assert.strictEqual(isMine, true, 'Should match own stealth address');
+});
+
+test('checkStealthAddress - no match (wrong recipient)', () => {
+  const keysA = deriveStealthKeysFromGun('recipient-A');
+  const keysB = deriveStealthKeysFromGun('recipient-B');
+
+  // Sender generates for A
+  const { stealthAddress, ephemeralPubKey, viewTag } = generateStealthAddress(
+    keysA.spending.pub,
+    keysA.viewing.pub
+  );
+
+  // B scans
+  const isMine = checkStealthAddress(
+    ephemeralPubKey,
+    keysB.viewing.priv,
+    keysB.spending.priv,
+    stealthAddress,
+    viewTag
+  );
+
+  assert.strictEqual(isMine, false, 'Should not match another recipient\'s address');
+});
+
+test('checkStealthAddress - error handling: invalid length key', () => {
+  const keys = deriveStealthKeysFromGun('test-error');
+  const invalidLengthKey = '0x1234'; // Too short
+
+  const isMine = checkStealthAddress(
+    invalidLengthKey,
+    keys.viewing.priv,
+    keys.spending.priv,
+    '0x0000000000000000000000000000000000000000'
+  );
+
+  assert.strictEqual(isMine, false, 'Should return false for invalid length key');
+});
+
+test('checkStealthAddress - error handling: invalid hex characters', () => {
+  const keys = deriveStealthKeysFromGun('test-error');
+  const invalidHexKey = '0x' + 'G'.repeat(64); // Non-hex G
+
+  const isMine = checkStealthAddress(
+    invalidHexKey,
+    keys.viewing.priv,
+    keys.spending.priv,
+    '0x0000000000000000000000000000000000000000'
+  );
+
+  assert.strictEqual(isMine, false, 'Should return false for invalid hex key');
+});
+
+test('checkStealthAddress - error handling: invalid elliptic curve point', () => {
+  const keys = deriveStealthKeysFromGun('test-error');
+  // Valid length but likely invalid point (too many f's)
+  const invalidPointKey = '0x02' + 'f'.repeat(64);
+
+  const isMine = checkStealthAddress(
+    invalidPointKey,
+    keys.viewing.priv,
+    keys.spending.priv,
+    '0x0000000000000000000000000000000000000000'
+  );
+
+  assert.strictEqual(isMine, false, 'Should return false for invalid EC point');
 });
