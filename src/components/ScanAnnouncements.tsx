@@ -440,18 +440,10 @@ export const ScanAnnouncements: React.FC = () => {
                               Active Exposure
                             </span>
                           </div>
-                          <div className="relative group/pk">
+                          <div className="relative">
                             <code className="block bg-base-100 p-8 rounded-[24px] border-4 border-error font-mono text-xs break-all font-black selection:bg-error selection:text-base-100 leading-relaxed">
                               {entry.privateKey}
                             </code>
-                            <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
-                              onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
-                              }
-                            >
-                              📋
-                            </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
                             🚨 SECURITY ADVISORY: THIS KEY GRANTS TOTAL CONTROL.
