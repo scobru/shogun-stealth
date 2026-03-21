@@ -148,8 +148,11 @@ export const RegisterStealth: React.FC = () => {
           if (keys) setIsOnChain(true);
         });
       }
-    } catch (e: any) {
-      setStatus({ type: "error", msg: `Error: ${e.message}` });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: `Error: ${e instanceof Error ? e.message : String(e)}`,
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -184,8 +187,13 @@ export const RegisterStealth: React.FC = () => {
             method: "wallet_switchEthereumChain",
             params: [{ chainId: hexChainId }],
           });
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
+        } catch (switchError: unknown) {
+          if (
+            switchError &&
+            typeof switchError === "object" &&
+            "code" in switchError &&
+            (switchError as { code: unknown }).code === 4902
+          ) {
             await (window as any).ethereum.request({
               method: "wallet_addEthereumChain",
               params: [
@@ -210,8 +218,11 @@ export const RegisterStealth: React.FC = () => {
         type: "success",
         msg: `Wallet connected to ${currentNetwork.name}! You can now register on-chain.`,
       });
-    } catch (e: any) {
-      setStatus({ type: "error", msg: `Connection failed: ${e.message}` });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: `Connection failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
     }
   };
 
@@ -261,11 +272,11 @@ export const RegisterStealth: React.FC = () => {
         type: "success",
         msg: "✅ Stealth keys registered for Shogun Identity on-chain!",
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Chain registration error:", e);
       setStatus({
         type: "error",
-        msg: `Chain Error: ${e.message || "Unknown error"}`,
+        msg: `Chain Error: ${e instanceof Error ? e.message : typeof e === "string" ? e : "Unknown error"}`,
       });
     } finally {
       setIsRegisteringOnChain(false);
