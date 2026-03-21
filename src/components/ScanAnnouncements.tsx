@@ -135,8 +135,8 @@ export const ScanAnnouncements: React.FC = () => {
           "🔍 No addresses found. (New signals will appear if subscribed.)",
         );
       }
-    } catch (e: any) {
-      setStatus(`Error: ${e.message}`);
+    } catch (e: unknown) {
+      setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setIsScanning(false);
     }
@@ -163,7 +163,7 @@ export const ScanAnnouncements: React.FC = () => {
         }),
       );
       setOwnedAddresses(updated);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Balance fetch error:", e);
     } finally {
       setIsLoadingBalances(false);
@@ -186,8 +186,8 @@ export const ScanAnnouncements: React.FC = () => {
       setOwnedAddresses((prev) => prev.filter((o) => o.id !== annId));
       setAnnouncements((prev) => prev.filter((a) => a.id !== annId));
       setStatus("✨ Signal deleted from GunDB");
-    } catch (e: any) {
-      setStatus(`Error deleting signal: ${e.message}`);
+    } catch (e: unknown) {
+      setStatus(`Error deleting signal: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
@@ -268,10 +268,14 @@ export const ScanAnnouncements: React.FC = () => {
           e.id === entry.id ? { ...e, balance: "0.0", balanceWei: 0n } : e,
         ),
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSweepState((prev) => ({
         ...prev,
-        [entry.id]: { ...state, sending: false, error: e.message },
+        [entry.id]: {
+          ...state,
+          sending: false,
+          error: e instanceof Error ? e.message : String(e),
+        },
       }));
     }
   };

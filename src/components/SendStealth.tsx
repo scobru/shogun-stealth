@@ -192,8 +192,11 @@ export const SendStealth: React.FC = () => {
         });
         setStep(2);
       }
-    } catch (e: any) {
-      setStatus({ type: "error", msg: `Lookup failed: ${e.message}` });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: `Lookup failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
     } finally {
       setIsLookingUp(false);
     }
@@ -218,8 +221,11 @@ export const SendStealth: React.FC = () => {
         type: "info",
         msg: `🎯 One-time stealth address generated!`,
       });
-    } catch (e: any) {
-      setStatus({ type: "error", msg: `Generation failed: ${e.message}` });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: `Generation failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -304,9 +310,12 @@ export const SendStealth: React.FC = () => {
       }
       setAnnounced(true);
       setStep(4);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Broadcast error:", e);
-      setStatus({ type: "error", msg: `Broadcast failed: ${e.message}` });
+      setStatus({
+        type: "error",
+        msg: `Broadcast failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -326,8 +335,11 @@ export const SendStealth: React.FC = () => {
         type: "success",
         msg: `Identity funding broadcasted! TX: ${tx.hash.slice(0, 8)}`,
       });
-    } catch (e: any) {
-      setStatus({ type: "error", msg: e.message });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: e instanceof Error ? e.message : String(e),
+      });
     } finally {
       setIsFunding(false);
     }
@@ -353,8 +365,11 @@ export const SendStealth: React.FC = () => {
         type: "success",
         msg: `Sent ${amount} ETH to ${stealthAddress.slice(0, 10)}... (TX: ${tx.hash.slice(0, 8)})`,
       });
-    } catch (e: any) {
-      setStatus({ type: "error", msg: e.message });
+    } catch (e: unknown) {
+      setStatus({
+        type: "error",
+        msg: e instanceof Error ? e.message : String(e),
+      });
     }
   };
 

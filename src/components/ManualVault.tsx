@@ -21,7 +21,7 @@ const ManualVault: React.FC = () => {
         setAddress(wallet.address);
         setError(null);
         fetchBalance(wallet.address);
-      } catch (e: any) {
+      } catch (e: unknown) {
         setAddress("");
         setBalance(null);
         setError("Invalid Private Key format");
@@ -38,7 +38,7 @@ const ManualVault: React.FC = () => {
       const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
       const bal = await provider.getBalance(addr);
       setBalance(ethers.formatEther(bal));
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError("Failed to fetch balance");
     } finally {
       setIsLoading(false);
@@ -79,8 +79,8 @@ const ManualVault: React.FC = () => {
 
       setTxHash(tx.hash);
       fetchBalance(address);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setIsSending(false);
     }
