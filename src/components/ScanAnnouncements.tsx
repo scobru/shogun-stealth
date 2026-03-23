@@ -135,8 +135,8 @@ export const ScanAnnouncements: React.FC = () => {
           "🔍 No addresses found. (New signals will appear if subscribed.)",
         );
       }
-    } catch (e: any) {
-      setStatus(`Error: ${e.message}`);
+    } catch (e: unknown) {
+      setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setIsScanning(false);
     }
@@ -163,7 +163,7 @@ export const ScanAnnouncements: React.FC = () => {
         }),
       );
       setOwnedAddresses(updated);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Balance fetch error:", e);
     } finally {
       setIsLoadingBalances(false);
@@ -186,8 +186,8 @@ export const ScanAnnouncements: React.FC = () => {
       setOwnedAddresses((prev) => prev.filter((o) => o.id !== annId));
       setAnnouncements((prev) => prev.filter((a) => a.id !== annId));
       setStatus("✨ Signal deleted from GunDB");
-    } catch (e: any) {
-      setStatus(`Error deleting signal: ${e.message}`);
+    } catch (e: unknown) {
+      setStatus(`Error deleting signal: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
@@ -268,10 +268,14 @@ export const ScanAnnouncements: React.FC = () => {
           e.id === entry.id ? { ...e, balance: "0.0", balanceWei: 0n } : e,
         ),
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSweepState((prev) => ({
         ...prev,
-        [entry.id]: { ...state, sending: false, error: e.message },
+        [entry.id]: {
+          ...state,
+          sending: false,
+          error: e instanceof Error ? e.message : String(e),
+        },
       }));
     }
   };
@@ -440,18 +444,10 @@ export const ScanAnnouncements: React.FC = () => {
                               Active Exposure
                             </span>
                           </div>
-                          <div className="relative group/pk">
+                          <div className="relative">
                             <code className="block bg-base-100 p-8 rounded-[24px] border-4 border-error font-mono text-xs break-all font-black selection:bg-error selection:text-base-100 leading-relaxed">
                               {entry.privateKey}
                             </code>
-                            <button
-                              className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center border-2 border-error/20 hover:bg-error hover:text-base-100 transition-all opacity-40 group-hover/pk:opacity-100"
-                              onClick={() =>
-                                navigator.clipboard.writeText(entry.privateKey)
-                              }
-                            >
-                              📋
-                            </button>
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest text-error/40 text-center">
                             🚨 SECURITY ADVISORY: THIS KEY GRANTS TOTAL CONTROL.

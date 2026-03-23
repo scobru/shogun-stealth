@@ -183,35 +183,37 @@ export function checkStealthAddress(
     viewingPrivKey: string,
     spendingPrivKey: string,
     announcedAddress: string,
-    viewTag?: string
-): boolean {
-    const tryCheck = (pk: string) => {
+    viewTag?: string,
+    viewingSigningKey?: ethers.SigningKey
+): ethers.Wallet | null {
+    // Optimization: Use provided SigningKey or create once at function level
+    const signingKey = viewingSigningKey || new ethers.SigningKey(viewingPrivKey);
+
+    const tryCheck = (pk: string): ethers.Wallet | null => {
         try {
             const normalizedEphemeralKey = normalizePublicKey(pk);
 
             // 1. Optional fast tag check
             if (viewTag && viewTag !== "0x00" && viewTag !== "0x" && viewTag !== "0x01") {
-                const viewingWallet = new ethers.Wallet(viewingPrivKey);
-                const ssTag = viewingWallet.signingKey.computeSharedSecret(normalizedEphemeralKey);
+                const ssTag = signingKey.computeSharedSecret(normalizedEphemeralKey);
                 const hTag = ethers.keccak256(ssTag);
                 const computedTag = hTag.slice(0, 6).toLowerCase();
                 const normalizedTag = viewTag.startsWith("0x") ? viewTag.toLowerCase() : "0x" + viewTag.toLowerCase();
 
                 if (computedTag !== normalizedTag) {
-                    return false;
+                    return null;
                 }
             }
 
             // 2. Definitive check
-            openStealthAddress(
+            return openStealthAddress(
                 announcedAddress,
                 normalizedEphemeralKey,
                 viewingPrivKey,
                 spendingPrivKey
             );
-            return true;
         } catch {
-            return false;
+            return null;
         }
     };
 
@@ -226,7 +228,7 @@ export function checkStealthAddress(
         return tryCheck("0x02" + pk) || tryCheck("0x03" + pk);
     }
 
-    return false;
+    return null;
 }
 
 /**
@@ -242,28 +244,21 @@ export function scanAnnouncements(
 
     console.log(`[Stealth] Scanning ${announcements.length} announcements...`);
 
+    // Optimization: Create SigningKey once for the entire scan
+    const viewingSigningKey = new ethers.SigningKey(keys.viewing.priv);
+
     for (const ann of announcements) {
-        if (
-            checkStealthAddress(
-                ann.ephemeralPubKey,
-                keys.viewing.priv,
-                keys.spending.priv,
-                ann.stealthAddress,
-                ann.viewTag
-            )
-        ) {
-            try {
-                const wallet = openStealthAddress(
-                    ann.stealthAddress,
-                    ann.ephemeralPubKey,
-                    keys.viewing.priv,
-                    keys.spending.priv
-                );
-                owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
-            } catch (e) {
-                // Should not happen if checkStealthAddress returned true
-                console.warn("[Stealth] Match check passed but open failed:", e);
-            }
+        const wallet = checkStealthAddress(
+            ann.ephemeralPubKey,
+            keys.viewing.priv,
+            keys.spending.priv,
+            ann.stealthAddress,
+            ann.viewTag,
+            viewingSigningKey
+        );
+
+        if (wallet) {
+            owned.push({ ...ann, wallet, privateKey: wallet.privateKey });
         }
     }
 
