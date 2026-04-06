@@ -10,7 +10,6 @@ import RegisterStealth from "./RegisterStealth";
 import SendStealth from "./SendStealth";
 import ScanAnnouncements from "./ScanAnnouncements";
 
-import { useNetwork } from "../lib/NetworkContext";
 import ManualVault from "./ManualVault";
 
 type Tab = "register" | "send" | "scan" | "vault";
