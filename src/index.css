@@ -219,3 +219,23 @@ body {
     0 10px 20px -5px rgba(0, 0, 0, 0.5),
     0 0 15px rgba(212, 225, 87, 0.2) !important;
 }
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .app-main {
+    padding: 2rem 1rem;
+  }
+
+  .surface-container {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .navbar-custom {
+    padding: 0.75rem 0;
+  }
+
+  .navbar-inner {
+    gap: 0.5rem;
+  }
+}
