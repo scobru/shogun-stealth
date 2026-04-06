@@ -13,11 +13,7 @@ import {
 } from "@fluidkey/stealth-account-kit";
 
 // Helper to convert Uint8Array to Hex with 0x prefix
-const toHex = (arr: Uint8Array) =>
-    "0x" +
-    Array.from(arr)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+const toHex = (arr: Uint8Array) => "0x" + Buffer.from(arr).toString("hex");
 
 /**
  * Normalize public key to compressed format (33 bytes)
