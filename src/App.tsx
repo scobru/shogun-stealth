@@ -30,14 +30,6 @@ declare global {
     ShogunRelays: {
       forceListUpdate: () => Promise<string[]>;
     };
-    shogunDebug?: {
-      clearAllData: () => void;
-      sdk: ShogunCore;
-      gun: any;
-      relays: string[];
-    };
-    gun?: any;
-    shogun?: ShogunCore;
   }
 }
 
@@ -246,26 +238,6 @@ function App() {
 
       const { core: shogunCore } = result;
 
-      if (import.meta.env.DEV && typeof window !== "undefined") {
-        setTimeout(() => {
-          window.shogunDebug = {
-            clearAllData: () => {
-              if (shogunCore.storage) {
-                shogunCore.storage.clearAll();
-              }
-              if (typeof sessionStorage !== "undefined") {
-                sessionStorage.removeItem("gunSessionData");
-              }
-            },
-            sdk: shogunCore,
-            gun: shogunCore.gun,
-            relays: relays,
-          };
-
-          window.gun = shogunCore.gun;
-          window.shogun = shogunCore;
-        }, 1000);
-      }
 
       setShogunData({ core: shogunCore, options: result.options });
     };
