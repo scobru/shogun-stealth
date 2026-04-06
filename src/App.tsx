@@ -51,12 +51,12 @@ const MainApp: React.FC = () => {
       <header className="navbar-custom">
         <div className="navbar-inner">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="Shogun Stealth" className="w-14 h-14" />
+            <img src={logo} alt="Shogun Stealth" className="w-10 h-10 md:w-14 md:h-14" />
             <div className="flex flex-col">
-              <span className="font-heading text-3xl font-bold tracking-tight text-primary">
+              <span className="font-heading text-xl md:text-3xl font-bold tracking-tight text-primary">
                 Stealth
               </span>
-              <p className="text-[9px] font-bold text-base-content/40 uppercase tracking-[0.4em]">
+              <p className="hidden md:block text-[9px] font-bold text-base-content/40 uppercase tracking-[0.4em]">
                 Private Stealth Transactions
               </p>
             </div>
@@ -66,7 +66,7 @@ const MainApp: React.FC = () => {
               className={`badge-custom ${isLoggedIn ? "!bg-success/20 !text-success" : "!bg-error/20 !text-error"}`}
             >
               <span className="badge-dot" />
-              <span className="font-bold text-[10px] tracking-widest">
+              <span className="hidden md:inline font-bold text-[10px] tracking-widest">
                 {isLoggedIn ? "ONLINE" : "OFFLINE"}
               </span>
             </div>
