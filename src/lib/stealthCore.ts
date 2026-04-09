@@ -13,11 +13,7 @@ import {
 } from "@fluidkey/stealth-account-kit";
 
 // Helper to convert Uint8Array to Hex with 0x prefix
-const toHex = (arr: Uint8Array) =>
-    "0x" +
-    Array.from(arr)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+const toHex = (arr: Uint8Array) => "0x" + Buffer.from(arr).toString("hex");
 
 /**
  * Normalize public key to compressed format (33 bytes)
@@ -80,6 +76,13 @@ export interface StealthAnnouncement {
  * Derive stealth keys from Gun SEA identity using SHIP-03 salts.
  */
 export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
+    if (typeof seaEpriv !== "string") {
+        throw new Error(`seaEpriv must be a string, got ${typeof seaEpriv}`);
+    }
+    if (!seaEpriv.trim()) {
+        throw new Error("seaEpriv cannot be empty or only whitespace");
+    }
+
     // 1. Derive Neural Identity (Legacy identity address derivation)
     const neuralSeed = keccak_256(ethers.toUtf8Bytes(seaEpriv));
     const neuralPriv = toHex(neuralSeed);

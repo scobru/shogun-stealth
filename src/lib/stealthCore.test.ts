@@ -55,11 +55,28 @@ test('deriveStealthKeysFromGun - known test vector', () => {
   assert.strictEqual(keys.viewing.priv, '0xa76cc59b56e70aa8d0bce531994197ce99e7741713bf1eeb06a9195e939afb59');
 });
 
-test('deriveStealthKeysFromGun - empty input', () => {
-  const keys = deriveStealthKeysFromGun('');
-  assert.ok(keys.neuralPriv.startsWith('0x'));
-  assert.ok(keys.spending.priv.startsWith('0x'));
-  assert.ok(keys.viewing.priv.startsWith('0x'));
+test('deriveStealthKeysFromGun - throws for invalid types', () => {
+  const invalidInputs = [null, undefined, 123, {}, [], true];
+
+  for (const input of invalidInputs) {
+    assert.throws(
+      () => deriveStealthKeysFromGun(input as any),
+      { message: /seaEpriv must be a string/ },
+      `Should throw for input type: ${typeof input}`
+    );
+  }
+});
+
+test('deriveStealthKeysFromGun - throws for empty string or whitespace', () => {
+  const emptyInputs = ['', ' ', '\t\n'];
+
+  for (const input of emptyInputs) {
+    assert.throws(
+      () => deriveStealthKeysFromGun(input),
+      { message: /seaEpriv cannot be empty/ },
+      `Should throw for empty or whitespace input: "${input}"`
+    );
+  }
 });
 
 // --- checkStealthAddress tests ---
