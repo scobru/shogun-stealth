@@ -8,7 +8,8 @@ export const STEALTH_KEY_REGISTRY_ABI = [
     "function getStealthKeys(address _registrant) external view returns (string viewingPublicKey, string spendingPublicKey)",
     "event StealthKeysRegistered(address indexed registrant, string viewingPublicKey, string spendingPublicKey)",
     "function registerStealthMetadata(address _stealthAddress, string _ephemeralPublicKey, string _encryptedRandomNumber, string _recipientPublicKey) external",
-    "event StealthMetadataRegistered(address indexed stealthAddress, address indexed sender, string ephemeralPublicKey, string encryptedRandomNumber, string recipientPublicKey)"
+    "event StealthMetadataRegistered(address indexed stealthAddress, address indexed sender, string ephemeralPublicKey, string encryptedRandomNumber, string recipientPublicKey)",
+    "function nonces(address _owner) external view returns (uint256)"
 ];
 
 export const PAYMENT_FORWARDER_ABI = [

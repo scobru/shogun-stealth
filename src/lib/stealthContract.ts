@@ -42,6 +42,9 @@ export async function registerOnChainOnBehalf(
     // 1. Prepare EIP-712 Signature
     const network = await (gasSigner.provider as ethers.Provider).getNetwork();
     const chainId = network.chainId;
+    
+    // Fetch current nonce
+    const nonce = await registry.nonces(registrant);
 
     const domain = {
         name: "Shogun Stealth Key Registry",
@@ -54,12 +57,14 @@ export async function registerOnChainOnBehalf(
         StealthKeys: [
             { name: "viewingPublicKey", type: "string" },
             { name: "spendingPublicKey", type: "string" },
+            { name: "nonce", type: "uint256" },
         ],
     };
 
     const value = {
         viewingPublicKey: keys.viewing.pub,
         spendingPublicKey: keys.spending.pub,
+        nonce: nonce,
     };
 
     // Sign the typed data with the Neural Identity private key
