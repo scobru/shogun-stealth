@@ -54,26 +54,29 @@ export const ScanAnnouncements: React.FC = () => {
   useEffect(() => {
     if (!isLoggedIn || !core || !(core as any).gun) return;
 
-    const tryDeriveKeys = () => {
+    const tryDeriveKeys = async () => {
       const gun = core?.gun;
       const userPair =
         (core as any)?._user?._.sea ||
         (gun as any)?.user?.()?._?.sea ||
-        (core as any)?.db?.user?._?.sea ||
+        (core as any)?._?.sea ||
         null;
       if (userPair?.epriv) {
-        setStealthKeys(deriveStealthKeysFromGun(userPair.epriv));
+        const keys = await deriveStealthKeysFromGun(userPair.epriv);
+        setStealthKeys(keys);
         return true;
       }
       return false;
     };
 
-    if (tryDeriveKeys()) return;
     let attempts = 0;
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       attempts++;
-      if (tryDeriveKeys() || attempts >= 20) clearInterval(interval);
+      const success = await tryDeriveKeys();
+      if (success || attempts >= 20) clearInterval(interval);
     }, 500);
+
+    tryDeriveKeys();
     return () => clearInterval(interval);
   }, [isLoggedIn, core]);
 

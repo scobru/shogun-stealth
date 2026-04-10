@@ -14,7 +14,7 @@ async function runBenchmark() {
     console.log("Starting benchmark...");
 
     const seaEpriv = "benchmarking-secret-123";
-    const keys = deriveStealthKeysFromGun(seaEpriv);
+    const keys = await deriveStealthKeysFromGun(seaEpriv);
 
     const numAnnouncements = 100;
     const announcements: StealthAnnouncement[] = [];

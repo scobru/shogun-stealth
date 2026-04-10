@@ -86,10 +86,15 @@ export const SendStealth: React.FC = () => {
     const userPair = (core as any)?._user?._.sea || g?.user?.()?._.sea || null;
 
     if (userPair?.epriv) {
-      const addr = gunPairToEthAddress(userPair.epriv);
-      setSenderEthAddress(addr);
-      const keys = deriveStealthKeysFromGun(userPair.epriv);
-      setSenderKeys(keys);
+      const deriveSender = async () => {
+        const [addr, keys] = await Promise.all([
+          gunPairToEthAddress(userPair.epriv),
+          deriveStealthKeysFromGun(userPair.epriv),
+        ]);
+        setSenderEthAddress(addr);
+        setSenderKeys(keys);
+      };
+      deriveSender();
     }
   }, [isLoggedIn, core]);
 

@@ -6,14 +6,14 @@
  */
 
 import { ethers } from "ethers";
-import { keccak_256 } from "@noble/hashes/sha3.js";
+import { derive } from "shogun-core";
 import {
     generateStealthAddresses,
     generateStealthPrivateKey,
 } from "@fluidkey/stealth-account-kit";
 
 // Helper to convert Uint8Array to Hex with 0x prefix
-const toHex = (arr: Uint8Array) => "0x" + Buffer.from(arr).toString("hex");
+const toHex = (arr: Uint8Array) => "0x" + Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
 
 /**
  * Normalize public key to compressed format (33 bytes)
@@ -73,9 +73,9 @@ export interface StealthAnnouncement {
 }
 
 /**
- * Derive stealth keys from Gun SEA identity using SHIP-03 salts.
+ * Derive stealth keys from Gun SEA identity using HKDF (Shogun Core compatible).
  */
-export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
+export async function deriveStealthKeysFromGun(seaEpriv: string): Promise<StealthKeys> {
     if (typeof seaEpriv !== "string") {
         throw new Error(`seaEpriv must be a string, got ${typeof seaEpriv}`);
     }
@@ -83,20 +83,19 @@ export function deriveStealthKeysFromGun(seaEpriv: string): StealthKeys {
         throw new Error("seaEpriv cannot be empty or only whitespace");
     }
 
-    // 1. Derive Neural Identity (Legacy identity address derivation)
-    const neuralSeed = keccak_256(ethers.toUtf8Bytes(seaEpriv));
-    const neuralPriv = toHex(neuralSeed);
+    // 1. Derive Neural Identity (Account 0)
+    const neuralResult = await derive(seaEpriv, null, { account: 0, includeSecp256k1Ethereum: true });
+    const neuralPriv = neuralResult.secp256k1Ethereum.privateKey;
 
-    // 2. Derive Stealth Keys (SHIP-03 compliant derivation)
-    const viewingSeed = ethers.keccak256(
-        ethers.toUtf8Bytes("SHIP-03-VIEWING" + seaEpriv)
-    );
-    const viewingWallet = new ethers.Wallet(viewingSeed);
+    // 2. Derive Stealth Keys (Spending: Account 1, Viewing: Account 2)
+    const spendingResult = await derive(seaEpriv, null, { account: 1, includeSecp256k1Ethereum: true });
+    const viewingResult = await derive(seaEpriv, null, { account: 2, includeSecp256k1Ethereum: true });
 
-    const spendingSeed = ethers.keccak256(
-        ethers.toUtf8Bytes("SHIP-03-SPENDING" + seaEpriv)
-    );
-    const spendingWallet = new ethers.Wallet(spendingSeed);
+    const spendingPriv = spendingResult.secp256k1Ethereum.privateKey;
+    const viewingPriv = viewingResult.secp256k1Ethereum.privateKey;
+
+    const spendingWallet = new ethers.Wallet(spendingPriv);
+    const viewingWallet = new ethers.Wallet(viewingPriv);
 
     return {
         spending: {
@@ -270,11 +269,9 @@ export function scanAnnouncements(
 }
 
 /**
- * Legacy identity derivation.
+ * Neural identity derivation (Secure HKDF-SHA256 via Shogun Core).
  */
-export function gunPairToEthAddress(seaEpriv: string): string {
-    const seed = keccak_256(ethers.toUtf8Bytes(seaEpriv));
-    const privKey = toHex(seed);
-    const wallet = new ethers.Wallet(privKey);
-    return wallet.address;
+export async function gunPairToEthAddress(seaEpriv: string): Promise<string> {
+    const result = await derive(seaEpriv, null, { account: 0, includeSecp256k1Ethereum: true });
+    return result.secp256k1Ethereum.address;
 }

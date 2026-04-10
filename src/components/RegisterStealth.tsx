@@ -76,7 +76,7 @@ export const RegisterStealth: React.FC = () => {
   useEffect(() => {
     if (!isLoggedIn || !core) return;
 
-    const tryDeriveKeys = () => {
+    const tryDeriveKeys = async () => {
       const gun = (core as any)?.gun;
       const userPair =
         (core as any)?._user?._.sea ||
@@ -86,21 +86,25 @@ export const RegisterStealth: React.FC = () => {
 
       if (userPair?.epriv) {
         setUserPub(userPair.pub);
-        const keys = deriveStealthKeysFromGun(userPair.epriv);
+        const [keys, addr] = await Promise.all([
+          deriveStealthKeysFromGun(userPair.epriv),
+          gunPairToEthAddress(userPair.epriv),
+        ]);
         setStealthKeys(keys);
-        setEthAddress(gunPairToEthAddress(userPair.epriv));
+        setEthAddress(addr);
         return true;
       }
       return false;
     };
 
-    if (tryDeriveKeys()) return;
-
     let attempts = 0;
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       attempts++;
-      if (tryDeriveKeys() || attempts >= 20) clearInterval(interval);
+      const success = await tryDeriveKeys();
+      if (success || attempts >= 20) clearInterval(interval);
     }, 500);
+
+    tryDeriveKeys();
 
     return () => clearInterval(interval);
   }, [isLoggedIn, core]);
