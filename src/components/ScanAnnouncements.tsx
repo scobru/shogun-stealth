@@ -12,6 +12,7 @@ import {
   type StealthKeys,
   deriveStealthKeysFromGun,
 } from "../lib/stealthCore";
+import { calculateSweepParams } from "../lib/feeEstimation";
 import { useNetwork } from "../lib/NetworkContext";
 import {
   subscribeToAnnouncements,
@@ -227,37 +228,25 @@ export const ScanAnnouncements: React.FC = () => {
       if (balance === 0n)
         throw new Error(`Balance is 0 on ${currentNetwork.name}`);
 
-      // Estimate gas and fees
-      const feeData = await provider.getFeeData();
+      const params = await calculateSweepParams(
+        provider,
+        entry.stealthAddress,
+        state.to,
+        balance,
+        currentNetwork.gasPriceOracle
+      );
 
-      // Use maxFeePerGas if available (EIP-1559), otherwise fallback to gasPrice
-      const gasPrice =
-        feeData.gasPrice ??
-        feeData.maxFeePerGas ??
-        ethers.parseUnits("1", "gwei");
-
-      // On Base, we need to account for L1 data fees.
-      // 21000 is the L2 execution gas, but the total cost includes L1 overhead.
-      const l2GasLimit = 21000n;
-      const l2Cost = l2GasLimit * gasPrice;
-
-      // Add a buffer for L1 fees (approx 0.00005 - 0.0001 ETH on Base Sepolia)
-      const l1Buffer = ethers.parseUnits("0.0001", "ether");
-      const totalCost = l2Cost + l1Buffer;
-
-      if (balance <= totalCost) {
+      if (params.sendAmount <= 0n) {
         throw new Error(
-          `Balance (${ethers.formatEther(balance)} ETH) too low to cover gas & L1 fees (~${ethers.formatEther(totalCost)} ETH)`,
+          `Balance (${ethers.formatEther(balance)} ETH) too low to cover precise gas & L1 fees (~${ethers.formatEther(params.totalFee)} ETH)`
         );
       }
 
-      const sendAmount = balance - totalCost;
-
       const tx = await wallet.sendTransaction({
         to: state.to,
-        value: sendAmount,
-        gasLimit: l2GasLimit,
-        gasPrice: gasPrice,
+        value: params.sendAmount,
+        gasLimit: params.gasLimit,
+        gasPrice: params.gasPrice,
       });
 
       setSweepState((prev) => ({

@@ -5,6 +5,7 @@ export interface NetworkConfig {
     explorerUrl: string;
     registryAddress: string;
     forwarderAddress: string;
+    gasPriceOracle?: string;
 }
 
 export const NETWORKS: Record<string, NetworkConfig> = {
@@ -15,10 +16,11 @@ export const NETWORKS: Record<string, NetworkConfig> = {
         explorerUrl: "https://sepolia.basescan.org",
         registryAddress:
             import.meta.env.VITE_SEPOLIA_REGISTRY_ADDRESS ||
-            "0x6038197D7eb76ee668b37c61021619542F757B63",
+            "0xCF6429c227F1a2912Bcb98405CAa8b436c18Cb55",
         forwarderAddress:
             import.meta.env.VITE_SEPOLIA_FORWARDER_ADDRESS ||
-            "0x512edE537cb53dcbFC29629B4999c3e8f18799Eb",
+            "0xDF64fFB593AE0bEA06F35AD80d5097E18ee903B1",
+        gasPriceOracle: "0x420000000000000000000000000000000000000F",
     },
     "base-mainnet": {
         name: "Base Mainnet",
@@ -31,6 +33,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
         forwarderAddress:
             import.meta.env.VITE_MAINNET_FORWARDER_ADDRESS ||
             "0x0bE89b593A6eF044B25802195C634559a7FcBbdF",
+        gasPriceOracle: "0x420000000000000000000000000000000000000F",
     },
 };
 

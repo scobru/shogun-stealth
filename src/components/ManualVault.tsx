@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useNetwork } from "../lib/NetworkContext";
+import { calculateSweepParams } from "../lib/feeEstimation";
 
 const ManualVault: React.FC = () => {
   const { currentNetwork } = useNetwork();
@@ -58,23 +59,23 @@ const ManualVault: React.FC = () => {
       const wallet = new ethers.Wallet(pk, provider);
 
       const bal = await provider.getBalance(address);
-      const feeData = await provider.getFeeData();
-      const gasPrice = feeData.gasPrice ?? ethers.parseUnits("1", "gwei");
-      const gasLimit = 21000n;
+      const params = await calculateSweepParams(
+        provider,
+        address,
+        destination,
+        bal,
+        currentNetwork.gasPriceOracle
+      );
 
-      // Buffer for L1 fees on Base
-      const l1Buffer = ethers.parseUnits("0.0001", "ether");
-      const totalCost = gasLimit * gasPrice + l1Buffer;
-
-      if (bal <= totalCost) {
-        throw new Error("Insufficient balance for gas + L1 fees");
+      if (params.sendAmount <= 0n) {
+        throw new Error("Insufficient balance for precise gas + L1 fees");
       }
 
       const tx = await wallet.sendTransaction({
         to: destination,
-        value: bal - totalCost,
-        gasLimit,
-        gasPrice,
+        value: params.sendAmount,
+        gasLimit: params.gasLimit,
+        gasPrice: params.gasPrice,
       });
 
       setTxHash(tx.hash);
