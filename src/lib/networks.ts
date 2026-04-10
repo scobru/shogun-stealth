@@ -27,10 +27,10 @@ export const NETWORKS: Record<string, NetworkConfig> = {
         explorerUrl: "https://basescan.org",
         registryAddress:
             import.meta.env.VITE_MAINNET_REGISTRY_ADDRESS ||
-            "0x0000000000000000000000000000000000000000",
+            "0x9aD8B62765C528c168d704b89e50069876a29F2C",
         forwarderAddress:
             import.meta.env.VITE_MAINNET_FORWARDER_ADDRESS ||
-            "0x0000000000000000000000000000000000000000",
+            "0x0bE89b593A6eF044B25802195C634559a7FcBbdF",
     },
 };
 
