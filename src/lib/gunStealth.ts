@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import type { StealthAnnouncement, StealthKeys } from "./stealthCore";
 
-const STEALTH_REGISTRY = "shogun/stealth/registry/v2"; // Bumped version for 2-key model
-const STEALTH_ANNOUNCEMENTS = "shogun/stealth/announcements/v2";
+const STEALTH_REGISTRY = "null/stealth/registry/v2"; // Bumped version for 2-key model
+const STEALTH_ANNOUNCEMENTS = "null/stealth/announcements/v2";
 
 export interface StealthRegistryEntry {
     spendingPubKey: string; // S

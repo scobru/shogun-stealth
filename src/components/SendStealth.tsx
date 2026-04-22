@@ -1,7 +1,7 @@
 /**
  * SendStealth Component
  * Allows a user to generate a one-time stealth address for a recipient
- * and broadcast the signal to GunDB or On-Chain.
+ * and broadcast the signal to Zen or On-Chain.
  */
 
 import React, { useState } from "react";
@@ -158,7 +158,7 @@ export const SendStealth: React.FC = () => {
         if (chainKeys) {
           setRecipientEntry({
             pub: input,
-            alias: `Shogun ID: ${input.slice(0, 6)}...`,
+            alias: `Null ID: ${input.slice(0, 6)}...`,
             spendingPubKey: chainKeys.spending,
             viewingPubKey: chainKeys.viewing,
             updatedAt: Date.now(),
@@ -254,7 +254,7 @@ export const SendStealth: React.FC = () => {
           const currentB = await provider.getBalance(senderEthAddress!);
           if (currentB < required) {
             throw new Error(
-              `Insufficient Shogun ID Balance. Required: ${ethers.formatEther(required)} ETH`,
+              `Insufficient Null ID Balance. Required: ${ethers.formatEther(required)} ETH`,
             );
           }
         } else {
@@ -385,7 +385,7 @@ export const SendStealth: React.FC = () => {
           <input
             type="text"
             className="sharp-input flex-1 font-mono !text-lg"
-            placeholder="Shogun ID or 0x address..."
+            placeholder="Null ID or 0x address..."
             value={recipientPub}
             onChange={(e) => setRecipientPub(e.target.value)}
           />
@@ -400,7 +400,7 @@ export const SendStealth: React.FC = () => {
 
         <div className="flex justify-between items-center px-2 mb-6">
           <label className="sharp-label !mb-0 opacity-40">
-            Discovery Registry (Gun Pulse)
+            Discovery Registry (Zen Pulse)
           </label>
           <button
             className="text-[10px] uppercase font-black text-primary hover:tracking-[0.2em] transition-all"
@@ -451,7 +451,7 @@ export const SendStealth: React.FC = () => {
         </div>
 
         <p className="text-sm font-medium opacity-50 mb-10 leading-relaxed max-w-lg">
-          Generating a unique cryptographic alias. Only the owner of the Shogun
+          Generating a unique cryptographic alias. Only the owner of the Null
           ID above will be able to detect and unlock this signal.
         </p>
 
@@ -542,7 +542,7 @@ export const SendStealth: React.FC = () => {
                 >
                   <span className="text-xl">🛡️</span>
                   <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                    Shogun Identity
+                    Null Identity
                   </span>
                 </button>
               </div>
@@ -554,7 +554,7 @@ export const SendStealth: React.FC = () => {
                 <div className="flex justify-between items-start gap-4">
                   <div className="space-y-2">
                     <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">
-                      Shogun ID Address
+                      Null ID Address
                     </span>
                     <p className="text-xs font-mono font-bold break-all opacity-80">
                       {senderEthAddress}
@@ -580,7 +580,7 @@ export const SendStealth: React.FC = () => {
                     {isFunding ? (
                       <span className="loading loading-xs" />
                     ) : (
-                      "🔋 Fund Shogun ID via MetaMask"
+                      "🔋 Fund Null ID via MetaMask"
                     )}
                   </button>
                   <button
@@ -662,7 +662,7 @@ export const SendStealth: React.FC = () => {
                 disabled={isPublishing || announced || step < 3}
                 className={`sharp-button !py-6 font-black uppercase tracking-[0.2em] transition-all text-xs flex items-center justify-center gap-4 bg-base-200 border-4 border-base-content text-base-content hover:bg-base-300 hover:shadow-[12px_12px_0px_0px_rgba(var(--bc-rgb,0,0,0),1)]`}
               >
-                📡 Broadcast Gun
+                📡 Broadcast Zen
               </button>
 
               <button

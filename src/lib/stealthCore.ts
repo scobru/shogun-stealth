@@ -2,7 +2,7 @@
  * Stealth Core Library - Fluidkey / SHIP-03 Compatible
  *
  * Implements ERC-5564 inspired stealth addresses using Fluidkey Stealth Account Kit.
- * Compatible with Shogun Wallet (SHIP-03).
+ * Compatible with Null Route (SHIP-03).
  */
 
 import { ethers } from "ethers";
@@ -79,11 +79,11 @@ export async function deriveStealthKeysFromZen(seaEpriv: string): Promise<Stealt
     
     // 1. Derive Neural Identity (Account 0) - EVM compatible 
     // We use a custom label for each account to stay bitwise stable within Zen
-    const neuralPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|NEURAL|0" });
+    const neuralPair = await ZEN.pair(null, { seed: seaEpriv, label: "NULL|ROUTE|NEURAL|0" });
 
     // 2. Derive Stealth Keys (Spending: Account 1, Viewing: Account 2)
-    const spendingPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|SPENDING|1" });
-    const viewingPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|VIEWING|2" });
+    const spendingPair = await ZEN.pair(null, { seed: seaEpriv, label: "NULL|ROUTE|SPENDING|1" });
+    const viewingPair = await ZEN.pair(null, { seed: seaEpriv, label: "NULL|ROUTE|VIEWING|2" });
 
     // Zen priv keys are base-encoded strings, not 32-byte hex.
     // We hash them deterministically into valid scalars for ethers.

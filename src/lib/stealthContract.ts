@@ -6,7 +6,7 @@ import {
 import { StealthAnnouncement, StealthKeys } from "./stealthCore";
 
 /**
- * Register stealth keys on Shogun StealthKeyRegistry.
+ * Register stealth keys on Null Route StealthKeyRegistry.
  */
 export async function registerOnChain(
     registryAddress: string,
@@ -15,7 +15,7 @@ export async function registerOnChain(
 ): Promise<string> {
     const registry = getRegistryContract(registryAddress, signer);
 
-    // Shogun StealthKeyRegistry uses strings for public keys.
+    // Null Route StealthKeyRegistry uses strings for public keys.
     // We pass them as 0x-prefixed hex strings.
     const tx = await registry.registerStealthKeys(
         keys.viewing.pub,
@@ -47,7 +47,7 @@ export async function registerOnChainOnBehalf(
     const nonce = await registry.nonces(registrant);
 
     const domain = {
-        name: "Shogun Stealth Key Registry",
+        name: "Null Route Stealth Key Registry",
         version: "1",
         chainId: chainId,
         verifyingContract: await registry.getAddress(),

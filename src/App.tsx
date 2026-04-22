@@ -45,10 +45,10 @@ const MainApp: React.FC = () => {
       <header className="navbar-custom">
         <div className="navbar-inner">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="Shogun Stealth" className="w-10 h-10 md:w-14 md:h-14" />
+            <img src={logo} alt="NULL ROUTE" className="w-10 h-10 md:w-14 md:h-14" />
             <div className="flex flex-col">
               <span className="font-heading text-xl md:text-3xl font-bold tracking-tight text-primary">
-                Stealth
+                NULL ROUTE
               </span>
               <p className="hidden md:block text-[9px] font-bold text-base-content/40 uppercase tracking-[0.4em]">
                 Private Stealth Transactions
@@ -78,7 +78,7 @@ const MainApp: React.FC = () => {
         <div className="max-w-1040 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.15em] opacity-40">
-              <a href="https://github.com/scobru/shogun-stealth" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
+              <a href="https://github.com/scobru/null-route" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
                 Repo
               </a>
               <a href="https://t.me/shogun_eco" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
@@ -88,14 +88,14 @@ const MainApp: React.FC = () => {
                 Registry
               </a>
               <a href="https://shogun-eco.xyz/" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-                Ecosystem
+                Portal
               </a>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="h-px w-12 bg-primary/10 hidden md:block" />
               <span className="text-[10px] font-medium opacity-30">
-                Created with ❤️ by the Shogun Community
+                Created with ❤️ by the Null Route Community
               </span>
             </div>
           </div>

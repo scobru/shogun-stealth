@@ -1,7 +1,7 @@
 {
-  "name": "shogun-starter",
+  "name": "null-route",
   "version": "1.0.0",
-  "description": "Shogun starter template with React, authentication, and decentralized infrastructure",
+  "description": "Null Route - Stealth Transactions app built on the Shogun ecosystem",
   "type": "module",
   "main": "index.html",
   "scripts": {

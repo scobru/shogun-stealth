@@ -13,13 +13,13 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [networkKey, setNetworkKey] = useState<string>(() => {
-    return localStorage.getItem("shogun-stealth-network") || DEFAULT_NETWORK;
+    return localStorage.getItem("null-route-network") || DEFAULT_NETWORK;
   });
 
   const currentNetwork = NETWORKS[networkKey] || NETWORKS[DEFAULT_NETWORK];
 
   useEffect(() => {
-    localStorage.setItem("shogun-stealth-network", networkKey);
+    localStorage.setItem("null-route-network", networkKey);
   }, [networkKey]);
 
   return (

@@ -1,5 +1,5 @@
 /**
- * StealthDashboard - Main entry point for Shogun Stealth
+ * StealthDashboard - Main entry point for NULL ROUTE
  * A tab-based dashboard: Register | Send | Scan
  */
 
@@ -24,13 +24,13 @@ const tabs: { id: Tab; label: string; icon: string; desc: string }[] = [
     id: "send",
     label: "Send",
     icon: "📤",
-    desc: "Generate a one-time stealth address for a recipient and announce on Gun.",
+    desc: "Generate a one-time stealth address for a recipient and announce on Zen.",
   },
   {
     id: "scan",
     label: "Explorer",
     icon: "🔍",
-    desc: "Scan the Shogun network for stealth signals using your viewing key.",
+    desc: "Scan the Null Route network for stealth signals using your viewing key.",
   },
   {
     id: "vault",
@@ -112,9 +112,9 @@ export const StealthDashboard: React.FC = () => {
                   <strong className="text-base-content block mb-2 uppercase tracking-widest text-[10px]">
                     Step 1: Identity Generation
                   </strong>
-                  When you register, Shogun derives a unique pair of stealth
+                  When you register, Null Route derives a unique pair of stealth
                   keys (Spending & Viewing) from your decentralized identity.
-                  These keys are published to GunDB and optionally on-chain.
+                  These keys are published to Zen and optionally on-chain.
                 </p>
               </div>
               <div className="surface-container !bg-base-200 p-8 rounded-[32px] border-2 border-base-content/5">

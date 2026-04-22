@@ -116,7 +116,7 @@ export async function generatePairFromSeed(
   if (!result) {
     const derivedPassword = await zen.hash(
       seedPhrase,
-      'shogun-seed-salt',
+      'null-seed-salt',
       null,
       { name: 'SHA-256' },
     );

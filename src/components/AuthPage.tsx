@@ -49,7 +49,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ db, onAuth }) => {
       <div className="max-w-md w-full surface-container p-10 rounded-[40px] shadow-2xl z-10 border border-primary/5">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-primary mb-3 tracking-tighter uppercase italic">
-            Shogun Stealth
+            NULL ROUTE
           </h1>
           <p className="text-base-content/40 text-[10px] font-bold uppercase tracking-widest">
             Privacy Forge Gateway
@@ -78,7 +78,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ db, onAuth }) => {
             </label>
             <input 
               type="text" 
-              placeholder="shogun_neuro" 
+              placeholder="null_neuro" 
               className="input-material w-full"
               value={username}
               onChange={(e) => setUsername(e.target.value)}

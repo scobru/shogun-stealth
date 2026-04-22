@@ -70,7 +70,7 @@ export const RegisterStealth: React.FC = () => {
   const [copiedSpending, setCopiedSpending] = useState(false);
   const [copiedViewing, setCopiedViewing] = useState(false);
   const [copiedEth, setCopiedEth] = useState(false);
-  const [revealedShogun, setRevealedShogun] = useState(false);
+  const [revealedNull, setRevealedNull] = useState(false);
   const [signer, setSigner] = useState<any>(null);
 
   const zen = db?.zen;
@@ -266,7 +266,7 @@ export const RegisterStealth: React.FC = () => {
       setIsOnChain(true);
       setStatus({
         type: "success",
-        msg: "✅ Stealth keys registered for Shogun Identity on-chain!",
+        msg: "✅ Stealth keys registered for Null Route Identity on-chain!",
       });
     } catch (e: unknown) {
       console.error("Chain registration error:", e);
@@ -376,7 +376,7 @@ export const RegisterStealth: React.FC = () => {
       {/* Ethereum Identity Address */}
       <div className="bg-primary/5 rounded-[40px] p-10 border-4 border-base-content shadow-[32px_32px_0px_0px_rgba(var(--p-rgb,0,0,0),0.1)] relative">
         <label className="sharp-label !text-primary">
-          Master Shogun Identity (ID)
+          Master Null Route Identity (ID)
         </label>
         <div className="flex flex-col md:flex-row items-center gap-6 mt-6">
           <code className="flex-1 text-2xl font-black font-mono text-primary break-all leading-none tracking-tighter selection:bg-primary selection:text-base-100">
@@ -390,16 +390,16 @@ export const RegisterStealth: React.FC = () => {
               {copiedEth ? <CheckIcon /> : <CopyIcon />}
             </button>
             <button
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedShogun ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
-              onClick={() => setRevealedShogun(!revealedShogun)}
-              title={revealedShogun ? "Seal Secret" : "Expose Secret"}
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0 shadow-[8px_8px_0px_0px_rgba(var(--bc-rgb,0,0,0),0.1)] border-4 ${revealedNull ? "bg-error text-base-100 border-error" : "bg-base-300 border-base-content/20 text-base-content"}`}
+              onClick={() => setRevealedNull(!revealedNull)}
+              title={revealedNull ? "Seal Secret" : "Expose Secret"}
             >
-              {revealedShogun ? "🔒" : "🔑"}
+              {revealedNull ? "🔒" : "🔑"}
             </button>
           </div>
         </div>
 
-        {revealedShogun && stealthKeys?.neuralPriv && (
+        {revealedNull && stealthKeys?.neuralPriv && (
           <div className="mt-8 bg-error/5 border-4 border-error p-8 rounded-[32px] animate-in zoom-in-95 duration-200">
             <label className="text-[10px] font-black uppercase tracking-[0.3em] text-error mb-4 block">
               Master Spending Secret (PK)
@@ -409,14 +409,14 @@ export const RegisterStealth: React.FC = () => {
             </code>
             <p className="text-[10px] font-bold text-error mt-4 uppercase tracking-widest opacity-60">
               ⚠️ NEVER SHARE THIS SECRET. It grants full control over your
-              Shogun Identity.
+              Null Route Identity.
             </p>
           </div>
         )}
 
         <p className="text-[10px] text-primary/40 mt-8 leading-relaxed font-medium uppercase tracking-widest">
           Derived from your Gun pair. Used as a unique identifier for relay
-          communication across the Shogun Ecosystem.
+          communication across the Zen Ecosystem.
         </p>
       </div>
 
@@ -424,12 +424,12 @@ export const RegisterStealth: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-8 items-end pt-8">
         <div className="flex-1 space-y-3 w-full">
           <label className="text-[10px] font-bold opacity-40 tracking-[0.2em] uppercase ml-6">
-            Shogun Alias
+            Null Alias
           </label>
           <input
             type="text"
             className="input-material w-full !bg-base-200 border-2 border-transparent focus:border-primary/20 h-[56px]"
-            placeholder="e.g. neuro.shogun"
+            placeholder="e.g. null_neuro"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
           />

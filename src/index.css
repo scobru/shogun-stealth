@@ -171,7 +171,7 @@ body {
   background: hsl(var(--bc) / 0.2);
 }
 
-/* Overrides for Shogun Button Modal */
+/* Overrides for Null Route Modal */
 .shogun-modal-overlay {
   background-color: rgba(0, 0, 0, 0.7) !important;
   backdrop-filter: blur(8px) !important;

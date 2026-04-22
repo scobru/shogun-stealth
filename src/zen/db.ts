@@ -76,7 +76,7 @@ export class DataBase {
 
   async restoreSession(): Promise<AuthResult> {
     try {
-      const storedPair = localStorage.getItem('shogun_auth_pair') || localStorage.getItem('linda_auth_pair');
+      const storedPair = localStorage.getItem('null_auth_pair') || localStorage.getItem('shogun_auth_pair') || localStorage.getItem('linda_auth_pair');
       if (storedPair) {
         const payload = JSON.parse(storedPair);
         const pair = payload.pair || payload;
@@ -132,7 +132,7 @@ export class DataBase {
 
       await this.userPut('alias', normalizedUsername);
       
-      localStorage.setItem('shogun_auth_pair', JSON.stringify({ pair: userPair, username: normalizedUsername }));
+      localStorage.setItem('null_auth_pair', JSON.stringify({ pair: userPair, username: normalizedUsername }));
       this.emitAuthEvent();
 
       return { success: true, userPub: pub, username: normalizedUsername, isNewUser: true };
@@ -156,7 +156,7 @@ export class DataBase {
 
       this._pair = pair;
       this._pub = pub;
-      localStorage.setItem('shogun_auth_pair', JSON.stringify({ pair, username: normalizedUsername }));
+      localStorage.setItem('null_auth_pair', JSON.stringify({ pair, username: normalizedUsername }));
       this.emitAuthEvent();
 
       return { success: true, userPub: pub, username: normalizedUsername };
@@ -170,7 +170,7 @@ export class DataBase {
     try {
       this._pair = pair;
       this._pub = pair.pub;
-      localStorage.setItem('shogun_auth_pair', JSON.stringify({ pair, username }));
+      localStorage.setItem('null_auth_pair', JSON.stringify({ pair, username }));
       this.emitAuthEvent();
       return { success: true, userPub: pair.pub, username };
     } catch (e: any) {
@@ -181,7 +181,7 @@ export class DataBase {
   logout(): void {
     this._pair = null;
     this._pub = null;
-    localStorage.removeItem('shogun_auth_pair');
+    localStorage.removeItem('null_auth_pair');
   }
 
   getUserPub(): string | null {

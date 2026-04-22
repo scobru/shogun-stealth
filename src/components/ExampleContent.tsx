@@ -21,7 +21,7 @@ const ExampleContent: React.FC = () => {
     return (
       <div className="card content-card p-8">
         <div className="card-body">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Shogun Starter</h2>
+          <h2 className="text-2xl font-bold mb-4">Welcome to Null Route</h2>
           <p className="text-secondary mb-4">
             Please authenticate using the button above to access the application.
           </p>
