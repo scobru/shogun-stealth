@@ -6,11 +6,7 @@
  */
 
 import { ethers } from "ethers";
-import { derive } from "shogun-core";
-import {
-    generateStealthAddresses,
-    generateStealthPrivateKey,
-} from "@fluidkey/stealth-account-kit";
+import ZEN from "../zen/crypto";
 
 // Helper to convert Uint8Array to Hex with 0x prefix
 const toHex = (arr: Uint8Array) => "0x" + Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -36,10 +32,6 @@ function normalizePublicKey(publicKey: string): string {
             return "0x" + normalized;
         }
 
-        // If it's 64 hex chars (32 bytes), it might be a pkx (X coordinate).
-        // On-chain announcements from PaymentForwarder only emit X.
-        // We'll treat this as "need reconstruction" later, but for now, 
-        // we'll return it as 0x + hex and let the consumer handle prefixes.
         if (normalized.length === 64) {
             return "0x" + normalized;
         }
@@ -60,7 +52,7 @@ export interface StealthKeys {
         priv: string;
         pub: string;
     };
-    neuralPriv: string; // Private key for the Neural Identity (derived from Gun)
+    neuralPriv: string; // Private key for the Neural Identity (derived from Zen)
 }
 
 export interface StealthAnnouncement {
@@ -73,29 +65,30 @@ export interface StealthAnnouncement {
 }
 
 /**
- * Derive stealth keys from Gun SEA identity using HKDF (Shogun Core compatible).
+ * Derive stealth keys from Zen identity using deterministic sub-paires.
+ * Replaces legacy shogun-core.derive
  */
-export async function deriveStealthKeysFromGun(seaEpriv: string): Promise<StealthKeys> {
+export async function deriveStealthKeysFromZen(seaEpriv: string): Promise<StealthKeys> {
     if (typeof seaEpriv !== "string") {
         throw new Error(`seaEpriv must be a string, got ${typeof seaEpriv}`);
     }
-    if (!seaEpriv.trim()) {
-        throw new Error("seaEpriv cannot be empty or only whitespace");
-    }
-
-    // 1. Derive Neural Identity (Account 0)
-    const neuralResult = await derive(seaEpriv, null, { account: 0, includeSecp256k1Ethereum: true });
-    const neuralPriv = neuralResult.secp256k1Ethereum.privateKey;
+    
+    // 1. Derive Neural Identity (Account 0) - EVM compatible 
+    // We use a custom label for each account to stay bitwise stable within Zen
+    const neuralPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|NEURAL|0" });
+    const neuralPriv = neuralPair.priv; // In Zen, priv is hex-like string
 
     // 2. Derive Stealth Keys (Spending: Account 1, Viewing: Account 2)
-    const spendingResult = await derive(seaEpriv, null, { account: 1, includeSecp256k1Ethereum: true });
-    const viewingResult = await derive(seaEpriv, null, { account: 2, includeSecp256k1Ethereum: true });
+    const spendingPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|SPENDING|1" });
+    const viewingPair = await ZEN.pair(null, { seed: seaEpriv, label: "SHOGUN|STEALTH|VIEWING|2" });
 
-    const spendingPriv = spendingResult.secp256k1Ethereum.privateKey;
-    const viewingPriv = viewingResult.secp256k1Ethereum.privateKey;
-
-    const spendingWallet = new ethers.Wallet(spendingPriv);
-    const viewingWallet = new ethers.Wallet(viewingPriv);
+    // Zen priv keys need to be formatted as 0x hex for ethers if necessary
+    // But Zen.pair already handles curve math.
+    // If we need them as ethers wallets, we might need to ensure they are valid scalars.
+    
+    const spendingWallet = new ethers.Wallet("0x" + spendingPair.priv);
+    const viewingWallet = new ethers.Wallet("0x" + viewingPair.priv);
+    const neuralWallet = new ethers.Wallet("0x" + neuralPair.priv);
 
     return {
         spending: {
@@ -106,7 +99,7 @@ export async function deriveStealthKeysFromGun(seaEpriv: string): Promise<Stealt
             priv: viewingWallet.privateKey,
             pub: normalizePublicKey(viewingWallet.signingKey.publicKey),
         },
-        neuralPriv,
+        neuralPriv: neuralWallet.privateKey,
     };
 }
 
@@ -269,9 +262,10 @@ export function scanAnnouncements(
 }
 
 /**
- * Neural identity derivation (Secure HKDF-SHA256 via Shogun Core).
+ * Validate and format the deterministic seed from Zen.
  */
-export async function gunPairToEthAddress(seaEpriv: string): Promise<string> {
-    const result = await derive(seaEpriv, null, { account: 0, includeSecp256k1Ethereum: true });
-    return result.secp256k1Ethereum.address;
+function getValidSeed(seed: string): Uint8Array {
+  if (!seed || typeof seed !== 'string') throw new Error('Seed must be a string');
+  if (seed.trim() === '') throw new Error('Seed cannot be empty');
+  return Buffer.from(seed);
 }

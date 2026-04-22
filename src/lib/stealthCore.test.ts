@@ -1,29 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import {
-  deriveStealthKeysFromGun,
+  deriveStealthKeysFromZen,
   generateStealthAddress,
   checkStealthAddress
 } from './stealthCore.ts';
 
-test('deriveStealthKeysFromGun - deterministic derivation', async () => {
-  const seaEpriv = 'test-sea-epriv-123';
-  const keys1 = await deriveStealthKeysFromGun(seaEpriv);
-  const keys2 = await deriveStealthKeysFromGun(seaEpriv);
+test('deriveStealthKeysFromZen - deterministic derivation', async () => {
+  const seed = 'test-zen-seed-123';
+  const keys1 = await deriveStealthKeysFromZen(seed);
+  const keys2 = await deriveStealthKeysFromZen(seed);
 
   assert.deepStrictEqual(keys1, keys2, 'Derivation should be deterministic');
 });
 
-test('deriveStealthKeysFromGun - different inputs produce different keys', async () => {
-  const keys1 = await deriveStealthKeysFromGun('input-1-entropy-16');
-  const keys2 = await deriveStealthKeysFromGun('input-2-entropy-16');
+test('deriveStealthKeysFromZen - different inputs produce different keys', async () => {
+  const keys1 = await deriveStealthKeysFromZen('input-1-entropy-16');
+  const keys2 = await deriveStealthKeysFromZen('input-2-entropy-16');
 
   assert.notDeepStrictEqual(keys1, keys2, 'Different inputs should produce different keys');
 });
 
-test('deriveStealthKeysFromGun - correct output format', async () => {
-  const seaEpriv = 'test-key-format-16';
-  const keys = await deriveStealthKeysFromGun(seaEpriv);
+test('deriveStealthKeysFromZen - correct output format', async () => {
+  const seed = 'test-key-format-16';
+  const keys = await deriveStealthKeysFromZen(seed);
 
   // Neural identity
   assert.ok(keys.neuralPriv.startsWith('0x'), 'neuralPriv should start with 0x');
@@ -42,38 +42,28 @@ test('deriveStealthKeysFromGun - correct output format', async () => {
   assert.strictEqual(keys.viewing.pub.length, 68, 'viewing public key should be 68 characters long (0x + 33 bytes)');
 });
 
-test('deriveStealthKeysFromGun - known test vector', async () => {
-  const seaEpriv = 'test-vector-entropy-16';
-  const keys = await deriveStealthKeysFromGun(seaEpriv);
-
-  // Expected values from HKDF-SHA256 (SEA Wallet v1) via shogun-core
-  assert.strictEqual(keys.neuralPriv, '0x63503ac648c58861d3243b218e36f789ff3a12ddc1e77fc9589f29569b27cf59');
-  assert.strictEqual(keys.spending.priv, '0xc0a48b8da855c424539aacdc92f5e1bd5fdb781b9f9f28ef36ea968d9ba74c07');
-  assert.strictEqual(keys.viewing.priv, '0x91bb1298c021daf3631dd23ab5f4b36497bdc06b9b174984dd0ee7266d51dd47');
-});
-
-test('deriveStealthKeysFromGun - throws for invalid types', async () => {
+test('deriveStealthKeysFromZen - throws for invalid types', async () => {
   const invalidInputs = [null, undefined, 123, {}, [], true];
 
   for (const input of invalidInputs) {
     try {
-      await deriveStealthKeysFromGun(input as any);
+      await deriveStealthKeysFromZen(input as any);
       assert.fail(`Should have thrown for input type: ${typeof input}`);
     } catch (e: any) {
-      assert.match(e.message, /seaEpriv must be a string/, `Wrong error message for ${typeof input}`);
+      assert.match(e.message, /seed must be a string/, `Wrong error message for ${typeof input}`);
     }
   }
 });
 
-test('deriveStealthKeysFromGun - throws for empty string or whitespace', async () => {
+test('deriveStealthKeysFromZen - throws for empty string or whitespace', async () => {
   const emptyInputs = ['', ' ', '\t\n'];
 
   for (const input of emptyInputs) {
     try {
-      await deriveStealthKeysFromGun(input);
+      await deriveStealthKeysFromZen(input);
       assert.fail(`Should have thrown for empty input: "${input}"`);
     } catch (e: any) {
-      assert.match(e.message, /seaEpriv cannot be empty/, `Wrong error message for empty input: "${input}"`);
+      assert.match(e.message, /seed cannot be empty/, `Wrong error message for empty input: "${input}"`);
     }
   }
 });
@@ -81,7 +71,7 @@ test('deriveStealthKeysFromGun - throws for empty string or whitespace', async (
 // --- checkStealthAddress tests ---
 
 test('checkStealthAddress - happy path (match)', async () => {
-  const keys = await deriveStealthKeysFromGun('test-match-entropy-16');
+  const keys = await deriveStealthKeysFromZen('test-match-entropy-16');
   const { stealthAddress, ephemeralPubKey, viewTag } = generateStealthAddress(
     keys.spending.pub,
     keys.viewing.pub
@@ -99,8 +89,8 @@ test('checkStealthAddress - happy path (match)', async () => {
 });
 
 test('checkStealthAddress - no match (wrong recipient)', async () => {
-  const keysA = await deriveStealthKeysFromGun('recipient-A-entropy-16');
-  const keysB = await deriveStealthKeysFromGun('recipient-B-entropy-16');
+  const keysA = await deriveStealthKeysFromZen('recipient-A-entropy-16');
+  const keysB = await deriveStealthKeysFromZen('recipient-B-entropy-16');
 
   // Sender generates for A
   const { stealthAddress, ephemeralPubKey, viewTag } = generateStealthAddress(
@@ -121,7 +111,7 @@ test('checkStealthAddress - no match (wrong recipient)', async () => {
 });
 
 test('checkStealthAddress - error handling: invalid length key', async () => {
-  const keys = await deriveStealthKeysFromGun('test-error-entropy-16');
+  const keys = await deriveStealthKeysFromZen('test-error-entropy-16');
   const invalidLengthKey = '0x1234'; // Too short
 
   const isMine = checkStealthAddress(

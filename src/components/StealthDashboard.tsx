@@ -4,8 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { useShogun } from "shogun-button-react";
-import { ShogunButton } from "shogun-button-react";
+import { useAuth } from "../App";
 import RegisterStealth from "./RegisterStealth";
 import SendStealth from "./SendStealth";
 import ScanAnnouncements from "./ScanAnnouncements";
@@ -42,33 +41,13 @@ const tabs: { id: Tab; label: string; icon: string; desc: string }[] = [
 ];
 
 export const StealthDashboard: React.FC = () => {
-  const { isLoggedIn } = useShogun();
+  const { isLoggedIn } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("register");
 
   const activeTabInfo = tabs.find((t) => t.id === activeTab)!;
 
   return (
     <div className="max-w-4xl mx-auto space-y-12">
-      {/* Auth Gate */}
-      {!isLoggedIn && (
-        <div className="surface-container p-12 text-center flex flex-col items-center">
-          <div className="max-w-md mx-auto space-y-8">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-bold font-heading">
-                Gateway to Stealth
-              </h2>
-              <p className="text-base-content/40 font-medium leading-relaxed">
-                Connect your Shogun identity to access private transaction
-                vaults and cryptographic scanning tools.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <ShogunButton className="btn-primary-bloom" />
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tab Navigation */}
       <div className="space-y-12">
         <div className="flex justify-center">

@@ -1,41 +1,43 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from "react-router-dom";
-import {
-  ShogunButtonProvider,
-  ShogunButton,
-  useShogun,
-} from "shogun-button-react";
-import { shogunConnector } from "shogun-button-react";
-import type { ShogunCore } from "shogun-core";
-import Gun from "gun";
-import "gun/sea";
+import ZEN from "zen";
+import { DataBase } from "./zen/db";
+
+// Components
+import AuthPage from "./components/AuthPage";
+import StealthDashboard from "./components/StealthDashboard";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { NetworkSelector } from "./components/NetworkSelector";
 import { NetworkProvider, useNetwork } from "./lib/NetworkContext";
-import StealthDashboard from "./components/StealthDashboard";
 import logo from "/logo.svg";
 
 import "./index.css";
-import "shogun-relays";
 
-// Extend window interface for ShogunRelays
-declare global {
-  interface Window {
-    ShogunRelays: {
-      forceListUpdate: () => Promise<string[]>;
-    };
-  }
+// --- Auth Context ---
+interface AuthContextType {
+  db: DataBase;
+  isLoggedIn: boolean;
+  userPub: string | null;
+  username: string;
+  logout: () => void;
 }
 
-// Main component that uses the auth context
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  return context;
+};
+
+// --- Main App Layout ---
 const MainApp: React.FC = () => {
-  const { isLoggedIn } = useShogun();
+  const { isLoggedIn } = useAuth();
   const { currentNetwork } = useNetwork();
 
   return (
@@ -69,7 +71,6 @@ const MainApp: React.FC = () => {
       </header>
 
       <main className="app-main">
-        {/* Stealth Dashboard */}
         <StealthDashboard />
       </main>
 
@@ -77,44 +78,16 @@ const MainApp: React.FC = () => {
         <div className="max-w-1040 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.15em] opacity-40">
-              <a
-                href="https://github.com/scobru/shogun-stealth"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors"
-              >
+              <a href="https://github.com/scobru/shogun-stealth" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
                 Repo
               </a>
-              <a
-                href="https://t.me/shogun_eco"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors"
-              >
+              <a href="https://t.me/shogun_eco" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
                 Network
               </a>
-              <a
-                href={`${currentNetwork.explorerUrl}/address/${currentNetwork.registryAddress}`}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
-              >
+              <a href={`${currentNetwork.explorerUrl}/address/${currentNetwork.registryAddress}`} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4">
                 Registry
               </a>
-              <a
-                href={`${currentNetwork.explorerUrl}/address/${currentNetwork.forwarderAddress}`}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
-              >
-                Forwarder
-              </a>
-              <a
-                href="https://shogun-eco.xyz/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors"
-              >
+              <a href="https://shogun-eco.xyz/" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
                 Ecosystem
               </a>
             </div>
@@ -132,129 +105,93 @@ const MainApp: React.FC = () => {
   );
 };
 
-interface ShogunAppProps {
-  shogun: ShogunCore;
-  options: any;
-}
-
-function ShogunApp({ shogun, options }: ShogunAppProps) {
-  const handleLoginSuccess = useCallback((result: any) => {
-    console.log("Login success:", result);
-  }, []);
-
-  const handleError = useCallback((error: string | Error) => {
-    console.error("Auth error:", error);
-  }, []);
-
-  return (
-    <Router>
-      <NetworkProvider>
-        <ShogunButtonProvider
-          core={shogun}
-          options={options}
-          onLoginSuccess={handleLoginSuccess}
-          onSignupSuccess={handleLoginSuccess}
-          onError={handleError}
-        >
-          <Routes>
-            <Route path="/" element={<MainApp />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ShogunButtonProvider>
-      </NetworkProvider>
-    </Router>
-  );
-}
-
+// --- Root App ---
 function App() {
-  const [shogunData, setShogunData] = useState<{
-    core: ShogunCore;
-    options: any;
-  } | null>(null);
-  const [relays, setRelays] = useState<string[]>([]);
-  const [isLoadingRelays, setIsLoadingRelays] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+  const [dbInstance, setDbInstance] = useState<DataBase | null>(null);
+  const [authState, setAuthState] = useState({
+    isLoggedIn: false,
+    userPub: null as string | null,
+    username: "",
+  });
 
-  // First effect: fetch relays asynchronously
   useEffect(() => {
-    async function fetchRelays() {
+    const initZen = async () => {
       try {
-        setIsLoadingRelays(true);
-        const fetchedRelays = await window.ShogunRelays.forceListUpdate();
+        const relays = ["https://shogun-relay.scobrudot.dev/zen"];
+        const zen = new ZEN({
+          peers: relays,
+          localStorage: false,
+          radisk: false,
+        });
+        const db = new DataBase(zen);
+        setDbInstance(db);
 
-        console.log("Fetched relays:", fetchedRelays);
-
-        const peersToUse =
-          fetchedRelays && fetchedRelays.length > 0
-            ? fetchedRelays
-            : ["https://shogun-relay.scobrudot.dev/gun"];
-
-        setRelays(peersToUse);
-      } catch (error) {
-        console.error("Error fetching relays:", error);
-        setRelays(["https://peer.wallie.io/gun"]);
+        const restored = await db.restoreSession();
+        if (restored.success) {
+          setAuthState({
+            isLoggedIn: true,
+            userPub: db.getUserPub(),
+            username: restored.username || "",
+          });
+        }
+      } catch (err) {
+        console.error("Zen Init Failed", err);
       } finally {
-        setIsLoadingRelays(false);
+        setInitializing(false);
       }
-    }
-
-    fetchRelays();
+    };
+    initZen();
   }, []);
 
-  // Second effect: initialize ShogunCore only after relays are loaded
-  useEffect(() => {
-    if (isLoadingRelays || relays.length === 0) {
-      return;
+  const handleLogout = useCallback(() => {
+    if (dbInstance) {
+      dbInstance.logout();
+      setAuthState({ isLoggedIn: false, userPub: null, username: "" });
     }
+  }, [dbInstance]);
 
-    const initShogun = async () => {
-      const gun = Gun({
-        peers: relays,
-        localStorage: false,
-        radisk: false,
-        wire: true,
-        axe: true,
+  const handleAuthSuccess = (username: string) => {
+    if (dbInstance) {
+      setAuthState({
+        isLoggedIn: true,
+        userPub: dbInstance.getUserPub(),
+        username: username,
       });
+    }
+  };
 
-      const result = await shogunConnector({
-        appName: "Shogun Stealth",
-        gunInstance: gun,
-        web3: { enabled: true },
-        webauthn: {
-          enabled: true,
-          rpName: "Shogun Stealth",
-        },
-        nostr: { enabled: true },
-        showWebauthn: true,
-        showNostr: true,
-        showMetamask: true,
-        enableGunDebug: import.meta.env.DEV,
-        enableConnectionMonitoring: true,
-        defaultPageSize: 20,
-        connectionTimeout: 10000,
-        debounceInterval: 100,
-      });
-
-      const { core: shogunCore } = result;
-
-
-      setShogunData({ core: shogunCore, options: result.options });
-    };
-
-    initShogun();
-  }, [relays, isLoadingRelays]);
-
-  if (isLoadingRelays || !shogunData) {
+  if (initializing || !dbInstance) {
     return (
       <div className="flex items-center justify-center h-screen flex-col gap-4">
-        <span className="loading loading-lg"></span>
-        <p className="text-secondary">
-          {isLoadingRelays ? "Loading relays..." : "Initializing Shogun..."}
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-30">
+          Bootstrapping Stealth Protocol
         </p>
       </div>
     );
   }
 
-  return <ShogunApp shogun={shogunData.core} options={shogunData.options} />;
+  return (
+    <Router>
+      <NetworkProvider>
+        <AuthContext.Provider value={{
+          db: dbInstance,
+          ...authState,
+          logout: handleLogout
+        }}>
+          {!authState.isLoggedIn ? (
+            <AuthPage db={dbInstance} onAuth={handleAuthSuccess} />
+          ) : (
+            <Routes>
+              <Route path="/" element={<MainApp />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          )}
+        </AuthContext.Provider>
+      </NetworkProvider>
+    </Router>
+  );
 }
 
 export default App;

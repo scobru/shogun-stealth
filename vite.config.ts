@@ -80,13 +80,16 @@ export default defineConfig({
       crypto: 'crypto-browserify',
       util: 'util',
       process: 'process/browser',
+      'sodium-native': 'sodium-javascript',
+      'node:fs/promises': path.resolve(__dirname, './src/mock-empty.js'),
+      'node:fs': path.resolve(__dirname, './src/mock-empty.js'),
     },
   },
 
   // Optimizations
   optimizeDeps: {
-    include: [ "uuid", "buffer", "process", "shogun-core"],
-    exclude: ["shogun-button-react"],
+    include: ["uuid", "buffer", "process"],
+    exclude: ["zen"],
     esbuildOptions: {
       define: {
         global: 'globalThis'

@@ -45,7 +45,7 @@ const StepHeader = ({
 );
 
 export const SendStealth: React.FC = () => {
-  const { isLoggedIn, core } = useShogun();
+  const { isLoggedIn, db } = useAuth();
   const { currentNetwork } = useNetwork();
   const [recipientPub, setRecipientPub] = useState("");
   const [recipientEntry, setRecipientEntry] =
@@ -77,26 +77,23 @@ export const SendStealth: React.FC = () => {
   const [senderKeys, setSenderKeys] = useState<any | null>(null);
   const [senderBalance, setSenderBalance] = useState<string>("0");
 
-  const gun = (core as any)?.gun;
+  const zen = db?.zen;
 
   // Deriv sender identity
   React.useEffect(() => {
-    if (!isLoggedIn || !core) return;
-    const g = (core as any)?.gun;
-    const userPair = (core as any)?._user?._.sea || g?.user?.()?._.sea || null;
+    if (!isLoggedIn || !db) return;
+    const pair = db.pair;
 
-    if (userPair?.epriv) {
+    if (pair?.epriv) {
       const deriveSender = async () => {
-        const [addr, keys] = await Promise.all([
-          gunPairToEthAddress(userPair.epriv),
-          deriveStealthKeysFromGun(userPair.epriv),
-        ]);
-        setSenderEthAddress(addr);
+        const keys = await deriveStealthKeysFromZen(pair.epriv);
+        const neuralWallet = new ethers.Wallet(keys.neuralPriv);
+        setSenderEthAddress(neuralWallet.address);
         setSenderKeys(keys);
       };
       deriveSender();
     }
-  }, [isLoggedIn, core]);
+  }, [isLoggedIn, db]);
 
   // Fetch contract toll (efee)
   React.useEffect(() => {
@@ -132,9 +129,9 @@ export const SendStealth: React.FC = () => {
   }, [senderEthAddress, currentNetwork]);
 
   const loadRegistry = async () => {
-    if (!gun) return;
+    if (!zen) return;
     setLoadingRegistry(true);
-    const all = await getAllRegistered(gun);
+    const all = await getAllRegistered(zen);
     setRegisteredUsers(all);
     setLoadingRegistry(false);
   };
@@ -152,12 +149,7 @@ export const SendStealth: React.FC = () => {
     try {
       // 1. Check if input is an Ethereum address (On-Chain Lookup)
       if (ethers.isAddress(input)) {
-        let provider = (core as any)?.signer?.provider;
-
-        // Fallback to public RPC if Shogun provider is not ready
-        if (!provider) {
-          provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
-        }
+        const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
 
         const chainKeys = await getOnChainStealthKeys(
           currentNetwork.registryAddress,
@@ -181,19 +173,19 @@ export const SendStealth: React.FC = () => {
         }
       }
 
-      // 2. Fallback to GunDB Lookup
-      if (!gun) throw new Error("GunDB not available.");
-      const entry = await getStealthKeys(gun, input);
+      // 2. Fallback to Zen Lookup
+      if (!zen) throw new Error("Zen logic not available.");
+      const entry = await getStealthKeys(zen, input);
       if (!entry) {
         setStatus({
           type: "error",
-          msg: "Recipient not found in Gun or On-Chain. They must register first.",
+          msg: "Recipient not found in Zen Pulse or On-Chain. They must register first.",
         });
       } else {
         setRecipientEntry(entry);
         setStatus({
           type: "success",
-          msg: `📡 Found on Gun Pulse: ${entry.alias || entry.pub.slice(0, 16) + "..."}`,
+          msg: `📡 Found on Zen Pulse: ${entry.alias || entry.pub.slice(0, 16) + "..."}`,
         });
         setStep(2);
       }
@@ -242,23 +234,23 @@ export const SendStealth: React.FC = () => {
     setStatus(null);
     try {
       if (mode === "gun") {
-        if (!gun) throw new Error("GunDB not available.");
-        await publishAnnouncement(gun, {
+        if (!zen) throw new Error("Zen instance not available.");
+        await publishAnnouncement(zen, {
           ephemeralPubKey,
           stealthAddress,
           viewTag,
         });
-        setStatus({ type: "success", msg: "📡 Signal broadcasted to GunDB!" });
+        setStatus({ type: "success", msg: "📡 Signal broadcasted to Zen!" });
       } else {
-        let signer = (core as any)?.signer;
+        let activeSigner: ethers.Signer;
 
         if (fundingSource === "internal") {
           if (!senderKeys?.neuralPriv)
             throw new Error("Internal keys not found.");
           const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
-          signer = new ethers.Wallet(senderKeys.neuralPriv, provider);
+          activeSigner = new ethers.Wallet(senderKeys.neuralPriv, provider);
 
-          // Check balance - need at least amount + toll + some gas
+          // Check balance
           const required = ethers.parseEther(amount) + ethers.parseEther(toll);
           const currentB = await provider.getBalance(senderEthAddress!);
           if (currentB < required) {
@@ -266,23 +258,16 @@ export const SendStealth: React.FC = () => {
               `Insufficient Shogun ID Balance. Required: ${ethers.formatEther(required)} ETH`,
             );
           }
-        }
-
-        // Fallback to MetaMask if core.signer is not available and source is metamask
-        if (
-          !signer &&
-          (window as any).ethereum &&
-          fundingSource === "metamask"
-        ) {
+        } else {
+          // Fund via external wallet (MetaMask)
+          if (!(window as any).ethereum) throw new Error("MetaMask not found.");
           const provider = new ethers.BrowserProvider((window as any).ethereum);
-          signer = await provider.getSigner();
+          activeSigner = await provider.getSigner();
         }
-
-        if (!signer) throw new Error("Wallet not connected.");
 
         const txHash = await sendEthOnChain(
           currentNetwork.forwarderAddress,
-          signer,
+          activeSigner,
           {
             receiver: stealthAddress,
             ephemeralPubKey,
@@ -291,20 +276,17 @@ export const SendStealth: React.FC = () => {
           },
         );
 
-        // Proactive: Also push a "pointer" to GunDB for instant discovery
-        if (gun) {
+        // Proactive: Also push a "pointer" to Zen for instant discovery
+        if (zen) {
           try {
-            await publishAnnouncement(gun, {
+            await publishAnnouncement(zen, {
               ephemeralPubKey,
               stealthAddress,
               viewTag,
-              metadata: txHash, // Store txHash in metadata
+              metadata: txHash,
             });
-            console.log(
-              "[Stealth] Shadow signal pushed to GunDB for fast discovery",
-            );
           } catch (ge) {
-            console.warn("[Stealth] Failed to push shadow signal to Gun:", ge);
+            console.warn("[Stealth] Failed to push shadow signal to Zen:", ge);
           }
         }
 

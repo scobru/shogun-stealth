@@ -1,12 +1,3 @@
-/**
- * Gun Stealth - GunDB integration for 2nd Gen Stealth Transactions (Dual Key)
- *
- * Uses GunDB as a decentralized backend for:
- * - Stealth Registry: pub → {spendingPubKey, viewingPubKey}
- * - Announcements: list of {ephemeralPubKey, stealthAddress} records
- */
-
-import type { IGunInstance } from "gun";
 import { v4 as uuidv4 } from "uuid";
 import type { StealthAnnouncement, StealthKeys } from "./stealthCore";
 
@@ -16,16 +7,16 @@ const STEALTH_ANNOUNCEMENTS = "shogun/stealth/announcements/v2";
 export interface StealthRegistryEntry {
     spendingPubKey: string; // S
     viewingPubKey: string;  // V
-    pub: string;            // GunDB user public key
+    pub: string;            // Zen user public key
     alias?: string;         // Optional human-readable alias
     updatedAt: number;
 }
 
 /**
- * Publish your dual stealth public keys to the public Gun registry.
+ * Publish your dual stealth public keys to the public Zen registry.
  */
 export async function publishStealthKeys(
-    gun: IGunInstance<any>,
+    zen: any,
     pub: string,
     keys: StealthKeys,
     alias?: string
@@ -39,27 +30,30 @@ export async function publishStealthKeys(
             updatedAt: Date.now(),
         };
 
-        gun
+        // If zen is a user instance or has _sea, it might need authenticator
+        const pair = zen._?.sea || (zen.constructor?.SEA && zen.constructor.SEA.pair);
+
+        zen
             .get(STEALTH_REGISTRY)
             .get(pub)
             .put(entry as any, (ack: any) => {
                 if (ack.err) reject(new Error(ack.err));
                 else resolve();
-            });
+            }, pair ? { authenticator: pair } : {});
     });
 }
 
 /**
- * Look up a user's dual stealth keys by their GunDB public key.
+ * Look up a user's dual stealth keys by their Zen public key.
  */
 export async function getStealthKeys(
-    gun: IGunInstance<any>,
+    zen: any,
     targetPub: string
 ): Promise<StealthRegistryEntry | null> {
     return new Promise((resolve) => {
         const timeout = setTimeout(() => resolve(null), 5000);
 
-        gun
+        zen
             .get(STEALTH_REGISTRY)
             .get(targetPub)
             .once((data: StealthRegistryEntry | null) => {
@@ -73,16 +67,16 @@ export async function getStealthKeys(
  * Get all registered stealth addresses from the registry.
  */
 export async function getAllRegistered(
-    gun: IGunInstance<any>
+    zen: any
 ): Promise<StealthRegistryEntry[]> {
     return new Promise((resolve) => {
         const results: StealthRegistryEntry[] = [];
         const timeout = setTimeout(() => resolve(results), 5000);
 
-        gun
+        zen
             .get(STEALTH_REGISTRY)
             .map()
-            .once((data: StealthRegistryEntry | null) => {
+            .once((data: StealthRegistryEntry | null, key: string) => {
                 if (data?.spendingPubKey && data?.viewingPubKey) {
                     results.push(data);
                 }
@@ -96,10 +90,10 @@ export async function getAllRegistered(
 }
 
 /**
- * Publish a stealth announcement to Gun.
+ * Publish a stealth announcement to Zen.
  */
 export async function publishAnnouncement(
-    gun: IGunInstance<any>,
+    zen: any,
     announcement: Omit<StealthAnnouncement, "id" | "timestamp">
 ): Promise<string> {
     const id = uuidv4();
@@ -109,25 +103,27 @@ export async function publishAnnouncement(
         timestamp: Date.now(),
     };
 
+    const pair = zen._?.sea;
+
     return new Promise((resolve, reject) => {
-        gun
+        zen
             .get(STEALTH_ANNOUNCEMENTS)
             .get(id)
             .put(full as any, (ack: any) => {
                 if (ack.err) reject(new Error(ack.err));
                 else resolve(id);
-            });
+            }, pair ? { authenticator: pair } : {});
     });
 }
 
 /**
- * Subscribe to real-time stealth announcements from Gun.
+ * Subscribe to real-time stealth announcements from Zen.
  */
 export function subscribeToAnnouncements(
-    gun: IGunInstance<any>,
+    zen: any,
     onAnnouncement: (announcement: StealthAnnouncement) => void
 ): () => void {
-    const ref = gun
+    const ref = zen
         .get(STEALTH_ANNOUNCEMENTS)
         .map()
         .on((data: StealthAnnouncement | null) => {
@@ -142,16 +138,16 @@ export function subscribeToAnnouncements(
 }
 
 /**
- * Get all past announcements from Gun.
+ * Get all past announcements from Zen.
  */
 export async function getAllAnnouncements(
-    gun: IGunInstance<any>
+    zen: any
 ): Promise<StealthAnnouncement[]> {
     return new Promise((resolve) => {
         const results: StealthAnnouncement[] = [];
         const timeout = setTimeout(() => resolve(results), 5000);
 
-        gun
+        zen
             .get(STEALTH_ANNOUNCEMENTS)
             .map()
             .once((data: StealthAnnouncement | null) => {
@@ -167,19 +163,20 @@ export async function getAllAnnouncements(
     });
 }
 /**
- * Delete (nullify) an announcement from Gun.
+ * Delete (nullify) an announcement from Zen.
  */
 export async function deleteAnnouncement(
-    gun: IGunInstance<any>,
+    zen: any,
     id: string
 ): Promise<void> {
+    const pair = zen._?.sea;
     return new Promise((resolve, reject) => {
-        gun
+        zen
             .get(STEALTH_ANNOUNCEMENTS)
             .get(id)
             .put(null as any, (ack: any) => {
                 if (ack.err) reject(new Error(ack.err));
                 else resolve();
-            });
+            }, pair ? { authenticator: pair } : {});
     });
 }

@@ -36,19 +36,14 @@
     "daisyui": "^5.0.43",
     "dotenv": "^17.2.0",
     "ethers": "^6.16.0",
-    "gun": "git+https://github.com/scobru/gun",
-    "gun-avatar": "^2.2.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "react-router-dom": "^7.6.2",
-    "shogun-button-react": "git+https://github.com/scobru/shogun-button-react",
-    "shogun-core": "git+https://github.com/scobru/shogun-core",
-    "shogun-relays": "git+https://github.com/scobru/shogun-relays",
     "tailwindcss-animate": "^1.0.7",
-    "tar": "^7.5.13",
     "uuid": "^11.1.0",
     "vercel": "^50.28.0",
-    "vite-plugin-node-polyfills": "^0.24.0"
+    "vite-plugin-node-polyfills": "^0.24.0",
+    "zen": "https://github.com/scobru/zen"
   },
   "devDependencies": {
     "@types/node": "^24.0.1",

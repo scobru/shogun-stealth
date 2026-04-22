@@ -4,13 +4,13 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useShogun } from "shogun-button-react";
+import { useAuth } from "../App";
 import { ethers } from "ethers";
 import {
   scanAnnouncements,
   type StealthAnnouncement,
   type StealthKeys,
-  deriveStealthKeysFromGun,
+  deriveStealthKeysFromZen,
 } from "../lib/stealthCore";
 import { calculateSweepParams } from "../lib/feeEstimation";
 import { useNetwork } from "../lib/NetworkContext";
@@ -30,7 +30,7 @@ interface OwnedAnnouncement extends StealthAnnouncement {
 
 // Sepolia public RPC
 export const ScanAnnouncements: React.FC = () => {
-  const { isLoggedIn, core } = useShogun();
+  const { isLoggedIn, db } = useAuth();
   const { currentNetwork } = useNetwork();
   const [stealthKeys, setStealthKeys] = useState<StealthKeys | null>(null);
   const [announcements, setAnnouncements] = useState<StealthAnnouncement[]>([]);
@@ -49,43 +49,30 @@ export const ScanAnnouncements: React.FC = () => {
     >
   >({});
 
-  const gun = core?.gun;
+  const zen = db?.zen;
 
   // Load user pair and derive stealth keys
   useEffect(() => {
-    if (!isLoggedIn || !core || !(core as any).gun) return;
+    if (!isLoggedIn || !db) return;
 
     const tryDeriveKeys = async () => {
-      const gun = core?.gun;
-      const userPair =
-        (core as any)?._user?._.sea ||
-        (gun as any)?.user?.()?._?.sea ||
-        (core as any)?._?.sea ||
-        null;
-      if (userPair?.epriv) {
-        const keys = await deriveStealthKeysFromGun(userPair.epriv);
+      const pair = db.pair;
+      if (pair?.epriv) {
+        const keys = await deriveStealthKeysFromZen(pair.epriv);
         setStealthKeys(keys);
         return true;
       }
       return false;
     };
 
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts++;
-      const success = await tryDeriveKeys();
-      if (success || attempts >= 20) clearInterval(interval);
-    }, 500);
-
     tryDeriveKeys();
-    return () => clearInterval(interval);
-  }, [isLoggedIn, core]);
+  }, [isLoggedIn, db]);
 
   // Subscribe to live announcements
   useEffect(() => {
-    if (!gun || !isSubscribed) return;
+    if (!zen || !isSubscribed) return;
 
-    const unsub = subscribeToAnnouncements(gun, (ann) => {
+    const unsub = subscribeToAnnouncements(zen, (ann) => {
       setAnnouncements((prev) => {
         if (prev.find((a) => a.id === ann.id)) return prev;
         return [...prev, ann];
@@ -94,21 +81,19 @@ export const ScanAnnouncements: React.FC = () => {
     });
 
     return () => unsub();
-  }, [gun, isSubscribed]);
+  }, [zen, isSubscribed]);
 
   const loadAndScan = useCallback(async () => {
-    if (!gun || !stealthKeys) return;
+    if (!zen || !stealthKeys) return;
     setIsScanning(true);
-    setStatus("Syncing network signals (Gun + Base)...");
+    setStatus("Syncing network signals (Zen + Base)...");
     try {
-      // 1. Fetch from GunDB
-      const gunAnnouncements = await getAllAnnouncements(gun);
+      // 1. Fetch from Zen
+      const gunAnnouncements = await getAllAnnouncements(zen);
 
       // 2. Fetch from Chain
       let chainAnnouncements: StealthAnnouncement[] = [];
-      const provider =
-        (core as any)?.signer?.provider ||
-        new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
+      const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
 
       if (provider) {
         try {
@@ -144,7 +129,7 @@ export const ScanAnnouncements: React.FC = () => {
     } finally {
       setIsScanning(false);
     }
-  }, [gun, stealthKeys, core]);
+  }, [zen, stealthKeys, currentNetwork]);
 
   const loadBalances = async () => {
     if (ownedAddresses.length === 0) return;

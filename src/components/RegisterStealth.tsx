@@ -4,13 +4,12 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useShogun } from "shogun-button-react";
+import { useAuth } from "../App";
 import { ethers } from "ethers";
 import { useNetwork } from "../lib/NetworkContext";
 import { publishStealthKeys, getStealthKeys } from "../lib/gunStealth";
 import {
-  deriveStealthKeysFromGun,
-  gunPairToEthAddress,
+  deriveStealthKeysFromZen,
   StealthKeys,
 } from "../lib/stealthCore";
 import {
@@ -54,7 +53,7 @@ const CheckIcon = () => (
 );
 
 export const RegisterStealth: React.FC = () => {
-  const { isLoggedIn, core } = useShogun();
+  const { isLoggedIn, db, userPub: authPub } = useAuth();
   const { currentNetwork } = useNetwork();
   const [stealthKeys, setStealthKeys] = useState<StealthKeys | null>(null);
   const [userPub, setUserPub] = useState<string | null>(null);
@@ -74,79 +73,66 @@ export const RegisterStealth: React.FC = () => {
   const [revealedShogun, setRevealedShogun] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn || !core) return;
+    if (!isLoggedIn || !db) return;
 
     const tryDeriveKeys = async () => {
-      const gun = (core as any)?.gun;
-      const userPair =
-        (core as any)?._user?._.sea ||
-        gun?.user?.()?._.sea ||
-        (core as any)?.db?.user?._.sea ||
-        null;
-
-      if (userPair?.epriv) {
-        setUserPub(userPair.pub);
-        const [keys, addr] = await Promise.all([
-          deriveStealthKeysFromGun(userPair.epriv),
-          gunPairToEthAddress(userPair.epriv),
-        ]);
+      const pair = db.pair;
+      if (pair?.epriv) {
+        setUserPub(pair.pub);
+        const keys = await deriveStealthKeysFromZen(pair.epriv);
         setStealthKeys(keys);
-        setEthAddress(addr);
+        
+        // Derive eth address from neuralPriv
+        const neuralWallet = new ethers.Wallet(keys.neuralPriv);
+        setEthAddress(neuralWallet.address);
         return true;
       }
       return false;
     };
 
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts++;
-      const success = await tryDeriveKeys();
-      if (success || attempts >= 20) clearInterval(interval);
-    }, 500);
-
     tryDeriveKeys();
-
-    return () => clearInterval(interval);
-  }, [isLoggedIn, core]);
+  }, [isLoggedIn, db]);
 
   // Check if already registered
   useEffect(() => {
-    if (!userPub || !(core as any)?.gun || !stealthKeys) return;
-    getStealthKeys((core as any).gun, userPub).then((entry) => {
+    if (!zen || !userPub || !stealthKeys) return;
+    getStealthKeys(zen, userPub).then((entry) => {
       if (entry?.spendingPubKey === stealthKeys.spending.pub)
         setIsRegistered(true);
     });
-  }, [userPub, core, stealthKeys]);
+  }, [userPub, zen, stealthKeys]);
 
   // Check on-chain registry
   useEffect(() => {
-    if (!(core as any)?.signer?.provider || !ethAddress) return;
+    if (!ethAddress) return;
+    
+    const provider = new ethers.JsonRpcProvider(currentNetwork.rpcUrl);
     getOnChainStealthKeys(
       currentNetwork.registryAddress,
-      (core as any).signer.provider,
+      provider,
       ethAddress,
     ).then((keys) => {
       if (keys) setIsOnChain(true);
       else setIsOnChain(false);
     });
-  }, [core, ethAddress, currentNetwork]);
+  }, [ethAddress, currentNetwork]);
 
   const handlePublish = async () => {
-    if (!userPub || !stealthKeys || !(core as any)?.gun) return;
+    if (!userPub || !stealthKeys || !db) return;
     setIsPublishing(true);
     setStatus(null);
     try {
-      await publishStealthKeys((core as any).gun, userPub, stealthKeys, alias);
+      await publishStealthKeys(db.zen, userPub, stealthKeys, alias);
       setIsRegistered(true);
       setStatus({
         type: "success",
-        msg: "✅ Dual stealth keys published on Gun! SYNCING...",
+        msg: "✅ Dual stealth keys published on Zen! SYNCING...",
       });
       // Trigger on-chain check
-      if ((core as any)?.signer?.provider && ethAddress) {
+      if (ethAddress) {
         getOnChainStealthKeys(
           currentNetwork.registryAddress,
-          (core as any).signer.provider,
+          new ethers.JsonRpcProvider(currentNetwork.rpcUrl),
           ethAddress,
         ).then((keys) => {
           if (keys) setIsOnChain(true);
@@ -217,6 +203,8 @@ export const RegisterStealth: React.FC = () => {
       }
 
       await provider.send("eth_requestAccounts", []);
+      const newSigner = await provider.getSigner();
+      setSigner(newSigner);
       setIsWalletConnected(true);
       setStatus({
         type: "success",
@@ -236,9 +224,10 @@ export const RegisterStealth: React.FC = () => {
       setStatus({ type: "error", msg: "Error: Stealth keys not generated." });
       return;
     }
-    let signer = (core as any)?.signer;
+    
+    let activeSigner = signer;
 
-    if (!signer && (window as any).ethereum) {
+    if (!activeSigner && (window as any).ethereum) {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const network = await provider.getNetwork();
       if (network.chainId !== BigInt(currentNetwork.chainId)) {
@@ -248,10 +237,11 @@ export const RegisterStealth: React.FC = () => {
         });
         return;
       }
-      signer = await provider.getSigner();
+      activeSigner = await provider.getSigner();
+      setSigner(activeSigner);
     }
 
-    if (!signer) {
+    if (!activeSigner) {
       setStatus({
         type: "error",
         msg: "Error: No wallet detected. Please connect MetaMask or compatible wallet.",
@@ -266,7 +256,7 @@ export const RegisterStealth: React.FC = () => {
       // 2. MetaMask (signer) pays the gas
       await registerOnChainOnBehalf(
         currentNetwork.registryAddress,
-        signer,
+        activeSigner,
         stealthKeys.neuralPriv,
         stealthKeys,
       );
@@ -461,7 +451,7 @@ export const RegisterStealth: React.FC = () => {
             )}
           </button>
 
-          {!(core as any)?.signer && !isWalletConnected ? (
+          {!signer && !isWalletConnected ? (
             <button
               className="btn-secondary-bloom w-full sm:w-auto"
               onClick={handleConnectWallet}
