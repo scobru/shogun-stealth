@@ -1,53 +1,40 @@
 # 🕳️ NULL ROUTE
 
-**Null Route** is a high-performance, privacy-preserving payment dashboard built on the Shogun ecosystem. It implements **non-interactive stealth addresses** (ERC-5564 inspired) to enable private Ethereum transactions using decentralized identity mapping.
+**Null Route** is a premium, high-performance, and privacy-preserving payment dashboard. It implements **non-interactive stealth addresses** (ERC-5564) to enable private Ethereum transactions using decentralized identity mapping.
+
+---
+
+## ⚡ Zen-Native Architecture
+
+Unlike traditional stealth implementations, **Null Route** is built natively on **Zen**. It leverages decentralized identity protocols to derive cryptographic primitives directly from your identity.
+
+- **Deterministic Derivation**: Stealth viewing and spending keys are derived from your Zen encryption keys.
+- **P2P Announcements**: Transaction metadata is propagated through the Zen graph, eliminating the need for centralized indexers or on-chain event bloat for coordination.
+- **Unified Identity**: Your "Stealth Meta-Address" is tied to your Zen handle, making private payments as easy as sending to a username.
+
+---
 
 ## 🌟 Key Features
 
-- 🔐 **SHIP-03 Compliant**: Uses the Shogun Identity Protocol (SHIP-03) to derive stealth keys from Zen identities.
-- 🕵️ **Fluidkey Integration**: Built with the Fluidkey Stealth Account Kit for robust cryptographic derivation and address generation.
-- 🔗 **Zero-Knowledge Identity**: Senders can generate a unique, one-time Ethereum address for a recipient without the recipient being online.
-- 📡 **Decentralized Announcements**: Stealth transaction metadata is announced via Zen, allowing receivers to scan for incoming funds privately.
-- 🏎️ **Optimized Scanning**: Implements **View Tags** to speed up the discovery of owned stealth addresses by 99%.
-- 📱 **Modern Dashboard**: A premium, glassmorphic UI for registering stealth keys, sending private payments, and managing "cells" (owned stealth addresses).
+- 🔐 **Standard Compliant**: Full adherence to decentralized identity protocols for cross-app interoperability.
+- 🕵️ **Fluidkey Integration**: Powering robust cryptographic derivation and SECP256K1 stealth address generation.
+- 🔗 **Zero-Knowledge Identity**: Senders generate unique, one-time addresses without recipient interaction.
+- 📡 **Decentralized Discovery**: Stealth announcements are broadcasted over Zen relays.
+- 🏎️ **Optimized Scanning**: Implements **View Tags** for ultra-fast discovery of owned stealth addresses.
+- 📱 **Premium UI**: A glassmorphic, high-interaction dashboard built with Tailwind CSS 4 and DaisyUI 5.
 
 ---
 
-## 🚀 How it Works
+## 🛠️ Technology Stack
 
-1. **Identity Mapping**: Your Zen `epriv` (encryption private key) is used to deterministically derive two Ethereum key pairs: a **Viewing Key** and a **Spending Key**.
-2. **Registration**: You publish your **Stealth Meta-Address** (composed of your public viewing and spending keys) to the decentralized registry.
-3. **Sending**: A sender takes your meta-address and an ephemeral key to derive a unique **Stealth Address** (P) that only you can unlock.
-4. **Announcement**: The sender announces the payment on the Zen graph with an encrypted ephemeral public key and a **View Tag**.
-5. **Scanning**: You scan the Zen announcement graph. The **View Tag** allows you to quickly skip announcements that aren't yours. If a tag matches, you use your private **Viewing Key** to confirm ownership and your **Spending Key** to derive the private key for the funds.
-
----
-
-## 🛠️ Getting Started
-
-### Prerequisites
-
-- Node.js ≥ 20.0.0
-- A Web3 Wallet (Metamask, etc.) for on-chain interactions.
-
-### Installation
-
-```bash
-# Clone the repository
-cd null-route
-
-# Install dependencies
-yarn install
-```
-
-### Development
-
-```bash
-# Start development server
-yarn dev
-```
-
-The application will be available at `http://localhost:8080`.
+| Layer | Technology |
+|-------|------------|
+| **Core Framework** | [React 19](https://react.dev/) |
+| **Identity/P2P** | [Zen (Native)](https://github.com/scobru/zen) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + [DaisyUI 5](https://daisyui.com/) |
+| **Blockchain** | [Ethers v6](https://docs.ethers.org/v6/) |
+| **Cryptography** | [@fluidkey/stealth-account-kit](https://github.com/fluidkey/stealth-account-kit) |
+| **Build Tool** | [Vite 5](https://vitejs.dev/) |
 
 ---
 
@@ -56,49 +43,63 @@ The application will be available at `http://localhost:8080`.
 ```text
 null-route/
 ├── src/
+│   ├── zen/                # ZEN NATIVE: Custom DB wrapper & crypto primitives
+│   │   ├── db.ts           # Session management & Zen graph interactions
+│   │   └── crypto.ts       # Identity-based key derivation
 │   ├── lib/
-│   │   ├── stealthCore.ts     # CORE LOGIC: SHIP-03 derivation & Fluidkey integration
-│   │   ├── gunStealth.ts      # Zen coordination and announcements
-│   │   └── NetworkContext.tsx # Ethereum network state management
+│   │   ├── stealthCore.ts  # Identity derivation logic
+│   │   ├── gunStealth.ts   # Coordination layer for Zen announcements
+│   │   └── networks.ts     # Multi-network configuration (Base Mainnet/Sepolia)
 │   ├── components/
-│   │   ├── StealthDashboard.tsx    # Main App Logic
-│   │   ├── RegisterStealth.tsx     # Stealth Key Publication
-│   │   ├── SendStealth.tsx         # Stealth Address Generation & Sending
-│   │   └── ScanAnnouncements.tsx   # P2P Discovery & Private Key Recovery
-│   └── App.tsx                # Shogun SDK initialization
-├── index.html                 # App entry with wallet conflict protection
-└── vite.config.ts             # Vite configuration with node polyfills
+│   │   ├── StealthDashboard.tsx    # Main interaction hub
+│   │   ├── AuthPage.tsx            # Zen-native authentication flow
+│   │   └── ...                     # Specialized stealth components
+│   └── App.tsx             # Protocol initialization & routing
+├── index.html              # Entry point with wallet conflict protection
+└── vite.config.ts          # Vite config with Node.js polyfills
 ```
+
+---
+
+## 🚀 Getting Started
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/scobru/null-route.git
+cd null-route
+
+# Install dependencies
+npm install
+```
+
+### Development
+
+```bash
+# Start development server
+npm run dev
+```
+
+The application will be available at `http://localhost:8080`.
 
 ---
 
 ## ⚙️ Configuration
 
-The application supports **Base Mainnet** and **Base Sepolia**.
+The application is optimized for the **Base Ecosystem**.
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SEPOLIA_REGISTRY_ADDRESS` | The contract address for the stealth registry on Sepolia. |
-| `VITE_SEPOLIA_FORWARDER_ADDRESS` | The contract address for the payment forwarder on Sepolia. |
-| `VITE_MAINNET_REGISTRY_ADDRESS` | (Optional) Production registry address. |
+| Variable | Description | Default (Sepolia) |
+|----------|-------------|-------------------|
+| `VITE_SEPOLIA_REGISTRY_ADDRESS` | ERC-5564 Registry | `0xCF642...Cb55` |
+| `VITE_SEPOLIA_FORWARDER_ADDRESS` | Payment Forwarder | `0xDF64f...903B1` |
+| `VITE_MAINNET_REGISTRY_ADDRESS` | Production Registry | `0x9aD8B...29F2C` |
 
 ---
 
 ## 🛡️ Security & Standards
 
-- **Standardization**: Follows the **SHIP-03** specification for Shogun-wide identity interoperability.
-- **Privacy**: No linkage between your public ENS/Ethereum address and your stealth transactions on-chain.
-- **Decentralization**: All coordination happens over Zen, removing reliance on centralized indexers or servers.
+- **Standardization**: Follows **ERC-5564** for stealth addresses and modern identity protocols.
+- **Privacy**: Zero linkage between your public address and stealth transactions.
+- **Sovereignty**: Your keys never leave your browser; all derivation happens locally.
 
----
-
-## 🤝 Shogun Network
-
-This tool is part of the Shogun ecosystem:
-- **[shogun-auth](../shogun-auth)**: Unified identity and vault management.
-- **[shogun-wormhole](../shogun-wormhole)**: Secure P2P file transfers.
-
----
-
-Built with ❤️ by [scobru](https://github.com/scobru).  
-*Enabling financial privacy in the decentralized era.*
