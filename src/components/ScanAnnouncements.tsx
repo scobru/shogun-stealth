@@ -169,9 +169,9 @@ export const ScanAnnouncements: React.FC = () => {
   };
 
   const handleRemoveAnnouncement = async (annId: string) => {
-    if (!gun) return;
+    if (!zen) return;
     try {
-      await deleteAnnouncement(gun, annId);
+      await deleteAnnouncement(zen, annId);
       setOwnedAddresses((prev) => prev.filter((o) => o.id !== annId));
       setAnnouncements((prev) => prev.filter((a) => a.id !== annId));
       setStatus("✨ Signal deleted from GunDB");

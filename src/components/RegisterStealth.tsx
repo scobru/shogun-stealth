@@ -71,6 +71,9 @@ export const RegisterStealth: React.FC = () => {
   const [copiedViewing, setCopiedViewing] = useState(false);
   const [copiedEth, setCopiedEth] = useState(false);
   const [revealedShogun, setRevealedShogun] = useState(false);
+  const [signer, setSigner] = useState<any>(null);
+
+  const zen = db?.zen;
 
   useEffect(() => {
     if (!isLoggedIn || !db) return;
@@ -93,7 +96,6 @@ export const RegisterStealth: React.FC = () => {
     tryDeriveKeys();
   }, [isLoggedIn, db]);
 
-  // Check if already registered
   useEffect(() => {
     if (!zen || !userPub || !stealthKeys) return;
     getStealthKeys(zen, userPub).then((entry) => {

@@ -5,12 +5,11 @@
  */
 
 import React, { useState } from "react";
-import { useShogun } from "shogun-button-react";
+import { useAuth } from "../App";
 import { ethers } from "ethers";
 import {
   generateStealthAddress,
-  deriveStealthKeysFromGun,
-  gunPairToEthAddress,
+  deriveStealthKeysFromZen,
 } from "../lib/stealthCore";
 import {
   getStealthKeys,
