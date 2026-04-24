@@ -43,7 +43,7 @@
     "uuid": "^11.1.0",
     "vercel": "^50.28.0",
     "vite-plugin-node-polyfills": "^0.24.0",
-    "zen": "https://github.com/scobru/zen"
+    "zen": "https://github.com/akaoio/zen"
   },
   "devDependencies": {
     "@types/node": "^24.0.1",
