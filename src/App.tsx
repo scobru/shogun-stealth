@@ -45,7 +45,11 @@ const MainApp: React.FC = () => {
       <header className="navbar-custom">
         <div className="navbar-inner">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="NULL ROUTE" className="w-10 h-10 md:w-14 md:h-14" />
+            <img
+              src={logo}
+              alt="NULL ROUTE"
+              className="w-10 h-10 md:w-14 md:h-14"
+            />
             <div className="flex flex-col">
               <span className="font-heading text-xl md:text-3xl font-bold tracking-tight text-primary">
                 NULL ROUTE
@@ -78,16 +82,36 @@ const MainApp: React.FC = () => {
         <div className="max-w-1040 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.15em] opacity-40">
-              <a href="https://github.com/scobru/null-route" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
+              <a
+                href="https://github.com/scobru/null-route"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors"
+              >
                 Repo
               </a>
-              <a href="https://t.me/shogun_eco" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
+              <a
+                href="https://t.me/shogun_eco"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors"
+              >
                 Network
               </a>
-              <a href={`${currentNetwork.explorerUrl}/address/${currentNetwork.registryAddress}`} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4">
+              <a
+                href={`${currentNetwork.explorerUrl}/address/${currentNetwork.registryAddress}`}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors decoration-dotted underline underline-offset-4"
+              >
                 Registry
               </a>
-              <a href="https://shogun-eco.xyz/" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
+              <a
+                href="https://shogun-eco.xyz/"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors"
+              >
                 Portal
               </a>
             </div>
@@ -118,7 +142,7 @@ function App() {
   useEffect(() => {
     const initZen = async () => {
       try {
-        const relays = ["https://shogun-relay.scobrudot.dev/zen"];
+        const relays = ["https://delay.scobrudot.dev/zen"];
         const zen = new ZEN({
           peers: relays,
           localStorage: false,
@@ -175,11 +199,13 @@ function App() {
   return (
     <Router>
       <NetworkProvider>
-        <AuthContext.Provider value={{
-          db: dbInstance,
-          ...authState,
-          logout: handleLogout
-        }}>
+        <AuthContext.Provider
+          value={{
+            db: dbInstance,
+            ...authState,
+            logout: handleLogout,
+          }}
+        >
           {!authState.isLoggedIn ? (
             <AuthPage db={dbInstance} onAuth={handleAuthSuccess} />
           ) : (
