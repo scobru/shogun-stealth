@@ -147,6 +147,7 @@ function App() {
           peers: relays,
           localStorage: false,
           radisk: false,
+          WebSocket: typeof window !== "undefined" ? window.WebSocket : undefined,
         });
         const db = new DataBase(zen);
         setDbInstance(db);
