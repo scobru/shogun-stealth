@@ -89,7 +89,7 @@ export default defineConfig({
   // Optimizations
   optimizeDeps: {
     include: ["uuid", "buffer", "process"],
-    exclude: ["zen"],
+    exclude: [""],
     esbuildOptions: {
       define: {
         global: 'globalThis'

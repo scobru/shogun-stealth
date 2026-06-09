@@ -67,6 +67,7 @@ export const RegisterStealth: React.FC = () => {
   );
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [isRegisteringOnChain, setIsRegisteringOnChain] = useState(false);
+  const [deriveError, setDeriveError] = useState<string | null>(null);
   const [copiedSpending, setCopiedSpending] = useState(false);
   const [copiedViewing, setCopiedViewing] = useState(false);
   const [copiedEth, setCopiedEth] = useState(false);
@@ -79,18 +80,25 @@ export const RegisterStealth: React.FC = () => {
     if (!isLoggedIn || !db) return;
 
     const tryDeriveKeys = async () => {
-      const pair = db.pair;
-      if (pair?.epriv) {
+      try {
+        const pair = db.pair;
+        if (!pair) {
+          setDeriveError("No key pair found. Please log out and log back in.");
+          return;
+        }
+        const seed = pair.epriv || pair.priv;
+        if (!seed) {
+          setDeriveError(`Key pair is missing epriv/priv field. Found keys: ${Object.keys(pair).join(", ")}`);
+          return;
+        }
         setUserPub(pair.pub);
-        const keys = await deriveStealthKeysFromZen(pair.epriv);
+        const keys = await deriveStealthKeysFromZen(seed);
         setStealthKeys(keys);
-        
-        // Derive eth address from neuralPriv
         const neuralWallet = new ethers.Wallet(keys.neuralPriv);
         setEthAddress(neuralWallet.address);
-        return true;
+      } catch (e) {
+        setDeriveError(`Failed to derive stealth keys: ${e instanceof Error ? e.message : String(e)}`);
       }
-      return false;
     };
 
     tryDeriveKeys();
@@ -291,6 +299,15 @@ export const RegisterStealth: React.FC = () => {
         <p className="text-base-content/60">
           🔐 Login required to register your stealth address.
         </p>
+      </div>
+    );
+  }
+
+  if (deriveError) {
+    return (
+      <div className="card bg-base-200 p-6 text-center">
+        <p className="text-error font-bold mb-2">Key derivation failed</p>
+        <p className="text-base-content/60 text-xs">{deriveError}</p>
       </div>
     );
   }

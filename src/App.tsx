@@ -6,6 +6,8 @@ import {
   Navigate,
 } from "react-router-dom";
 import ZEN from "zen";
+import OPFS from "zen/lib/opfs.js";
+
 import { DataBase } from "./zen/db";
 
 // Components
@@ -142,11 +144,10 @@ function App() {
   useEffect(() => {
     const initZen = async () => {
       try {
-        const relays = ["https://delay.scobrudot.dev/zen"];
+        const relays = ["wss://delay.scobrudot.dev/zen"];
         const zen = new ZEN({
           peers: relays,
-          localStorage: false,
-          radisk: false,
+          store: OPFS,
           WebSocket: typeof window !== "undefined" ? window.WebSocket : undefined,
         });
         const db = new DataBase(zen);
